@@ -35,9 +35,7 @@ geoselector/
 * Sélection interactive de communes, départements et régions.
 * Récupération automatique des géométries via l'API Géo.
 * Intégration native avec QGIS (QgsVectorLayer).
-* Sélection interactive de communes, départements et régions.
-* Récupération automatique des géométries via l'API Géo.
-* Intégration native avec QGIS (QgsVectorLayer).
+
 ## Prérequis
 
 * QGIS 3.x
