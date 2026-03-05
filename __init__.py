@@ -6,8 +6,8 @@ Package public API – expose les classes principales.
 from pathlib import Path
 
 # Chemin absolu du répertoire du package (pour charger config.yaml)
-PACKAGE_ROOT = Path(__file__).parent
-CONFIG_PATH = PACKAGE_ROOT / "config" / "config.yaml"
+BASE_DIR = Path(__file__).parent
+CONFIG_PATH = BASE_DIR / "config" / "config.yaml"
 
 # Import du logger (évalué une seule fois)
 from .logging_config import configure_logging

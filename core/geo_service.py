@@ -1,8 +1,13 @@
+"""GeoDataService module – provides access to the geo.api.gouv.fr API.
+
+Exports:
+    GeoDataService – the main service class.
+"""
+
 from __future__ import annotations
 import json
 import urllib.parse
-import urllib.request
-import urllib.error
+import requests
 from pathlib import Path
 from typing import List, Dict, Any
 
@@ -16,17 +21,18 @@ from .exceptions import (
     EntityNotFoundError,
 )
 from ..logging_config import configure_logging
-from .. import CONFIG_PATH  # défini dans geoselector/__init__.py (voir plus bas)
 
 # -------------------------------------------------------------------------
-#   Chargement de la configuration (singleton)
+#   Chargement de la configuration (via ConfigLoader)
 # -------------------------------------------------------------------------
-_cfg_raw = yaml.safe_load(Path(CONFIG_PATH).read_text(encoding="utf-8"))
+from .config_loader import ConfigLoader
+
+_cfg_raw = ConfigLoader.load()
 CONFIG = _cfg_raw["api"]
 ENDPOINTS = _cfg_raw["endpoints"]
 FIELDS = _cfg_raw["fields"]
 
-logger = configure_logging(_cfg_raw)
+logger = configure_logging(dict(_cfg_raw))
 
 # -------------------------------------------------------------------------
 class GeoDataService:
@@ -38,7 +44,7 @@ class GeoDataService:
         self.timeout_geom   = CONFIG["timeout"]["geometry"]
 
     # -----------------------------------------------------------------
-    def _build_url(self, endpoint: str, params: dict[str, str]) -> str:
+    def _build_url(self, endpoint: str, params: Dict[str, str]) -> str:
         query = urllib.parse.urlencode(params)
         return f"{self.base_url}/{endpoint}?{query}"
 
@@ -47,16 +53,17 @@ class GeoDataService:
         """Effectue la requête GET et renvoie le JSON décodé.
         Lève GeoApiError en cas de problème réseau ou HTTP."""
         try:
-            with urllib.request.urlopen(url, timeout=timeout) as resp:
-                payload = resp.read().decode()
-                logger.debug("GET %s → %s bytes", url, len(payload))
-                return json.loads(payload)
-        except urllib.error.HTTPError as e:
-            logger.error("HTTP %s %s – %s", e.code, e.reason, url)
-            raise GeoApiError(f"Erreur HTTP {e.code}: {e.reason}", e.code) from e
-        except urllib.error.URLError as e:
-            logger.error("URLError %s – %s", e.reason, url)
-            raise GeoApiError(f"Erreur réseau : {e.reason}") from e
+            response = requests.get(url, timeout=timeout)
+            response.raise_for_status()
+            payload = response.text
+            logger.debug("GET %s → %s bytes", url, len(payload))
+            return json.loads(payload)
+        except requests.exceptions.HTTPError as e:
+            logger.error("HTTP %s – %s", e.response.status_code, e.response.reason)
+            raise GeoApiError(f"Erreur HTTP {e.response.status_code}: {e.response.reason}", e.response.status_code) from e
+        except requests.exceptions.RequestException as e:
+            logger.error("RequestException %s – %s", type(e).__name__, str(e))
+            raise GeoApiError(f"Erreur réseau : {e}") from e
         except json.JSONDecodeError as e:
             logger.error("JSON invalide reçu de %s – %s", url, e)
             raise GeoApiError("Réponse JSON invalide") from e
@@ -154,3 +161,6 @@ class GeoDataService:
             Region(code=c["code"], name=c["nom"])
             for c in data
         ]
+
+# Export public API for this module
+__all__ = ["GeoDataService"]

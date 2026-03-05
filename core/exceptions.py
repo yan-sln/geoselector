@@ -1,3 +1,10 @@
+"""Custom exception hierarchy for the geoselector package.
+
+All exceptions inherit from :class:`MyGeoselectorError` so that callers can
+catch a single base class if they wish.  The concrete subclasses provide more
+specific error information.
+"""
+
 class MyGeoselectorError(Exception):
     """Base class for all custom exceptions of the package."""
     pass
@@ -23,3 +30,11 @@ class EntityNotFoundError(MyGeoselectorError):
         super().__init__(f"Aucune entité trouvée pour « {query} » ({entity_type})")
         self.entity_type = entity_type
         self.query = query
+
+# Export public API for core exceptions
+__all__ = [
+    "MyGeoselectorError",
+    "InvalidEntityTypeError",
+    "GeoApiError",
+    "EntityNotFoundError",
+]

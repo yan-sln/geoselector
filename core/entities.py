@@ -21,3 +21,10 @@ class Department(GeoEntity):
 @dataclass(frozen=True)
 class Region(GeoEntity):
     pass          # aucune donnée supplémentaire
+
+__all__ = [
+    "GeoEntity",
+    "Municipality",
+    "Department",
+    "Region",
+]

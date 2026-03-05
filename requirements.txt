@@ -1,0 +1,4 @@
+PyYAML
+typing-extensions
+qgis>=3.0
+requests
