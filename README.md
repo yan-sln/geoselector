@@ -13,11 +13,14 @@ geoselector/
 ├── core/
 │   ├── __init__.py
 │   └── geo_service.py
+│   └── geo_service.py
 ├── selectors/
 │   ├── __init__.py
 │   └── entity_selector.py
+│   └── entity_selector.py
 ├── feature_selectors/
 │   ├── __init__.py
+│   └── entity_feature_selector.py
 │   └── entity_feature_selector.py
 └── utils/
     ├── __init__.py
@@ -26,6 +29,9 @@ geoselector/
 
 ## Fonctionnalités
 
+* Sélection interactive de communes, départements et régions.
+* Récupération automatique des géométries via l'API Géo.
+* Intégration native avec QGIS (QgsVectorLayer).
 * Sélection interactive de communes, départements et régions.
 * Récupération automatique des géométries via l'API Géo.
 * Intégration native avec QGIS (QgsVectorLayer).
@@ -48,6 +54,8 @@ cd geoselector
 
 ## Utilisation
 ### Exemple basique
+```
+
 ```
 
 ```
