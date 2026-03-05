@@ -1,4 +1,4 @@
-pytest
-black
-flake8
-mypy
+pytest>=6.0
+black>=22.0
+flake8>=3.9
+mypy>=0.900
