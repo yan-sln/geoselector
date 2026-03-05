@@ -12,36 +12,23 @@ geoselector/
 ├── __init__.py
 ├── core/
 │   ├── __init__.py
-│   ├── geo_entity.py
-│   ├── geo_service.py
-│   ├── base_selector.py
-│   └── selector_factory.py
+│   └── geo_service.py
 ├── selectors/
 │   ├── __init__.py
-│   ├── municipality_selector.py
-│   ├── department_selector.py
-│   └── region_selector.py
+│   └── entity_selector.py
 ├── feature_selectors/
 │   ├── __init__.py
-│   ├── municipality_feature_selector.py
-│   ├── department_feature_selector.py
-│   └── region_feature_selector.py
+│   └── entity_feature_selector.py
 └── utils/
     ├── __init__.py
     └── geometry_utils.py
 ```
 
-## Principes de conception appliqués
-
-Respect des principes de design orienté objet (SOLID).
-
 ## Fonctionnalités
 
-* Sélection interactive de communes, départements et régions
-* Récupération automatique des géométries via l'API Géo
-* Intégration native avec QGIS (QgsVectorLayer)
-* Support de l'architecture modulaire et extensible
-
+* Sélection interactive de communes, départements et régions.
+* Récupération automatique des géométries via l'API Géo.
+* Intégration native avec QGIS (QgsVectorLayer).
 ## Prérequis
 
 * QGIS 3.x
@@ -62,31 +49,8 @@ cd geoselector
 ## Utilisation
 ### Exemple basique
 ```
-from geoselector import (
-    GeoDataService, 
-    MunicipalitySelector,
-    MunicipalityFeatureSelector
-)
 
-# Création des objets
-service = GeoDataService()
-municipality_selector = MunicipalitySelector(service)
-feature_selector = MunicipalityFeatureSelector(municipality_selector)
-
-# Sélection d'une commune
-selected_municipality = municipality_selector.select("Dijon")
-geometry = municipality_selector.load_geometry(selected_municipality.code)
-
-# Sélection dans QGIS
-feature = feature_selector.selectMunicipalityFeature()
 ```
-### Ajout d'une nouvelle entité
-
-Pour ajouter une nouvelle entité (ex: ville) :
-
-1. Créer une classe City dans geo_entity.py
-2. Ajouter la méthode searchCities() dans GeoDataService
-3. Créer CitySelector.py et CityFeatureSelector.py dans les dossiers appropriés
 
 ## Dépendances
 ### Dépendances obligatoires
@@ -96,4 +60,4 @@ Pour ajouter une nouvelle entité (ex: ville) :
 * requests : Pour les appels HTTP (si nécessaire)
 
 ## Diagramme de classes
-![UML_selector](https://github.com/user-attachments/assets/80f10f2c-3707-4abf-9785-f25b70c8606b)
+<img width="1525" height="389" alt="plantuml V2" src="https://github.com/user-attachments/assets/1b8b271c-c129-4e39-a2be-7c7ad5745477" />
