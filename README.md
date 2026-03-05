@@ -12,6 +12,7 @@ geoselector/
 ├── __init__.py
 ├── core/
 │   ├── __init__.py
+│   └── geo_entity.py
 │   └── geo_service.py
 ├── selectors/
 │   ├── __init__.py
