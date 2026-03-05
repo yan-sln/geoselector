@@ -11,21 +11,24 @@ Architecture
 geoselector/
 ├── __init__.py
 ├── core/
-│   ├── geo_entity.py          # Entités géospatiales
-│   ├── geo_service.py         # Service API Géo
-│   ├── base_selector.py       # Classes abstraites
-│   └── selector_factory.py    # Factory pattern
+│   ├── __init__.py
+│   ├── geo_entity.py
+│   ├── geo_service.py
+│   ├── base_selector.py
+│   └── selector_factory.py
 ├── selectors/
-│   ├── municipality_selector.py  # Sélecteur de communes
-│   ├── department_selector.py    # Sélecteur de départements
-│   └── region_selector.py        # Sélecteur de régions
+│   ├── __init__.py
+│   ├── municipality_selector.py
+│   ├── department_selector.py
+│   └── region_selector.py
 ├── feature_selectors/
-│   ├── base_feature_selector.py
+│   ├── __init__.py
 │   ├── municipality_feature_selector.py
 │   ├── department_feature_selector.py
 │   └── region_feature_selector.py
 └── utils/
-    └── geometry_utils.py      # Utilitaires géométriques
+    ├── __init__.py
+    └── geometry_utils.py
 ```
 
 ## Principes de conception appliqués
