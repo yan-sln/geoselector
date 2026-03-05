@@ -69,4 +69,4 @@ cd geoselector
 * requests : Pour les appels HTTP (si nécessaire)
 
 ## Diagramme de classes
-<img width="1525" height="389" alt="plantuml V2" src="https://github.com/user-attachments/assets/1b8b271c-c129-4e39-a2be-7c7ad5745477" />
+<img width="2458" height="1169" alt="plantuml V3" src="https://github.com/user-attachments/assets/c54069bc-b140-4d6e-9c39-139dda0d7201" />
