@@ -9,7 +9,7 @@ class EntityFeatureSelector:
         self._selected_feature: Optional[QgsFeature] = None
 
     def select_feature(self) -> QgsFeature:
-        """Sélection interactive d'un feature"""
+        """Sélection interactive d'un feature INCOMPLET"""
         # Ici, votre logique de sélection interactive QGIS
         # Exemple simplifié
         if self._layer is None:

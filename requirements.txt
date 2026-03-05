@@ -1,0 +1,4 @@
+PyYAML>=5.4
+typing-extensions>=4.0
+qgis>=3.0
+requests>=2.25

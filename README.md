@@ -9,20 +9,25 @@ Architecture
 
 ```
 geoselector/
-├── __init__.py
-├── core/
-│   ├── __init__.py
-│   └── geo_entity.py
-│   └── geo_service.py
-├── selectors/
-│   ├── __init__.py
-│   └── entity_selector.py
-├── feature_selectors/
-│   ├── __init__.py
-│   └── entity_feature_selector.py
-└── utils/
-    ├── __init__.py
-    └── geometry_utils.py
+├─ core/
+│   ├─ __init__.py
+│   ├─ entities.py
+│   ├─ geo_service.py
+│   └─ exceptions.py
+├─ selectors/
+│   ├─ __init__.py
+│   └─ entity_selector.py
+├─ feature_selectors/
+│   ├─ __init__.py
+│   └─ entity_feature_selector.py
+├─ utils/
+│   ├─ __init__.py
+│   └─ geometry_utils.py
+├─ config/
+│   └─ config.yaml                # configuration centralisée
+├─ logging_config.py              # petite fabrique de logger
+├─ __init__.py
+└─ README.md
 ```
 
 ## Fonctionnalités
@@ -30,9 +35,7 @@ geoselector/
 * Sélection interactive de communes, départements et régions.
 * Récupération automatique des géométries via l'API Géo.
 * Intégration native avec QGIS (QgsVectorLayer).
-* Sélection interactive de communes, départements et régions.
-* Récupération automatique des géométries via l'API Géo.
-* Intégration native avec QGIS (QgsVectorLayer).
+
 ## Prérequis
 
 * QGIS 3.x
@@ -64,4 +67,4 @@ cd geoselector
 * requests : Pour les appels HTTP (si nécessaire)
 
 ## Diagramme de classes
-<img width="1525" height="389" alt="plantuml V2" src="https://github.com/user-attachments/assets/1b8b271c-c129-4e39-a2be-7c7ad5745477" />
+<img width="2458" height="1169" alt="plantuml V3" src="https://github.com/user-attachments/assets/c54069bc-b140-4d6e-9c39-139dda0d7201" />
