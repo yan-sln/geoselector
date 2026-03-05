@@ -20,6 +20,7 @@ geoselector/
 │   ├── department_selector.py    # Sélecteur de départements
 │   └── region_selector.py        # Sélecteur de régions
 ├── feature_selectors/
+│   ├── base_feature_selector.py
 │   ├── municipality_feature_selector.py
 │   ├── department_feature_selector.py
 │   └── region_feature_selector.py
