@@ -23,7 +23,7 @@ class SelectorFactory:
 
     STRATEGIES = {
         "IGN": IGNApiStrategy,
-        "GOUVFRApiStrategy": GouvFrApiStrategy
+        "GOUVFR": GouvFrApiStrategy
     }
 
     @classmethod

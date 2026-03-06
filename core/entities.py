@@ -44,9 +44,13 @@ class Municipality(GeoEntity):
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Municipality':
+        code = data.get('code')
+        name = data.get('name')
+        if not code or not name:
+            raise ValueError("Code and name are required")
         return cls(
-            code=data.get('code') or '',
-            name=data.get('name') or '',
+            code=code,
+            name=name,
             department_code=data.get('department_code')
         )
 
@@ -62,9 +66,13 @@ class Department(GeoEntity):
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Department':
+        code = data.get('code')
+        name = data.get('name')
+        if not code or not name:
+            raise ValueError("Code and name are required")
         return cls(
-            code=data.get('code') or '',
-            name=data.get('name') or '',
+            code=code,
+            name=name,
             region_code=data.get('region_code')
         )
 
@@ -79,9 +87,13 @@ class Region(GeoEntity):
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Region':
+        code = data.get('code')
+        name = data.get('name')
+        if not code or not name:
+            raise ValueError("Code and name are required")
         return cls(
-            code=data.get('code') or '',
-            name=data.get('name') or ''
+            code=code,
+            name=name
         )
 
 class Parcel(GeoEntity):
@@ -97,9 +109,13 @@ class Parcel(GeoEntity):
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Parcel':
+        code = data.get('code')
+        name = data.get('name')
+        if not code or not name:
+            raise ValueError("Code and name are required")
         return cls(
-            code=data.get('code') or '',
-            name=data.get('name') or '',
+            code=code,
+            name=name,
             commune_code=data.get('commune_code'),
             section=data.get('section')
         )
@@ -116,8 +132,12 @@ class Section(GeoEntity):
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Section':
+        code = data.get('code')
+        name = data.get('name')
+        if not code or not name:
+            raise ValueError("Code and name are required")
         return cls(
-            code=data.get('code') or '',
-            name=data.get('name') or '',
+            code=code,
+            name=name,
             commune_code=data.get('commune_code')
         )
