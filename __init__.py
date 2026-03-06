@@ -1,26 +1,15 @@
-# -*- coding: utf-8 -*-
 """
-Package public API – expose les classes principales.
+Top-level package for geo_selector.
+Provides convenient access to the core service and selector factory.
 """
 
-from pathlib import Path
+# Export the main service class
+from .core.service import GeoService as core_service
 
-# Chemin absolu du répertoire du package (pour charger config.yaml)
-BASE_DIR = Path(__file__).parent
-CONFIG_PATH = BASE_DIR / "config" / "config.yaml"
-
-# Import du logger (évalué une seule fois)
-from .logging_config import configure_logging
-
-# Export des classes utiles
-from .core.geo_service import GeoDataService
-from .selectors.entity_selector import EntitySelector
-from .feature_selectors.entity_feature_selector import EntityFeatureSelector
-from .utils.geometry_utils import GeometryUtils
+# Export the selector factory function
+from .factory.selector_factory import SelectorFactory as selector_factory
 
 __all__ = [
-    "GeoDataService",
-    "EntitySelector",
-    "EntityFeatureSelector",
-    "GeometryUtils",
+    "core_service",
+    "selector_factory",
 ]

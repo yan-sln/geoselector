@@ -1,16 +1,13 @@
-# Export public API for the core package
-from .geo_service import GeoDataService
-from .entities import GeoEntity, Municipality, Department, Region
-from .exceptions import MyGeoselectorError, InvalidEntityTypeError, GeoApiError, EntityNotFoundError
+"""
+Core package for geo_selector.
+Provides entities, service, selector and related utilities.
+"""
+
+from .service import GeoService
+from .selector import EntitySelector, EntitySelectorImpl
 
 __all__ = [
-    "GeoDataService",
-    "GeoEntity",
-    "Municipality",
-    "Department",
-    "Region",
-    "MyGeoselectorError",
-    "InvalidEntityTypeError",
-    "GeoApiError",
-    "EntityNotFoundError",
+    "GeoService",
+    "EntitySelector",
+    "EntitySelectorImpl",
 ]
