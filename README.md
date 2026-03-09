@@ -132,7 +132,7 @@ selector = SelectorFactory.create_selector(Municipality, "GOUVFRApiStrategy")
 2. **Logging et erreurs** : remplacer les `print` par un vrai `logger`.
 3. **Tests unitaires** : pas visibles ici, mais cruciaux pour valider les stratégies API et le mapping des entités.
 4. **Pagination / limites** : `GouvFrApiStrategy.search` limite actuellement à 10 résultats fixes.
-5. **Validation des données** : certains champs optionnels (`commune_code`, `section`) pourraient avoir des validations plus robustes.
+5. **Validation des données** : les champs optionnels (`commune_code`, `section`, `region_code`, etc.) sont maintenant validés de façon robuste grâce à la fonction `_ensure_fields` dans `core/entities.py`, qui lève des `ValueError` explicites en cas d’incohérence.
 
 ---
 

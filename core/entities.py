@@ -5,6 +5,18 @@ from typing import Optional
 from abc import ABC, abstractmethod
 from .registry import EntityRegistry
 
+def _ensure_fields(data: dict, required: list[str], optional: list[str] = []) -> None:
+    """Validate that required keys exist and are strings, and optional keys if present are strings.
+    Raises:
+        ValueError: if a required key is missing or not a string, or an optional key is present but not a string.
+    """
+    for key in required:
+        if key not in data or not isinstance(data[key], str):
+            raise ValueError(f"Missing or invalid required field '{key}'.")
+    for key in optional:
+        if key in data and not isinstance(data[key], str):
+            raise ValueError(f"Invalid optional field '{key}': expected a string.")
+
 class GeoEntity(ABC):
     """
     Classe de base pour toutes les entités géographiques
@@ -44,13 +56,11 @@ class Municipality(GeoEntity):
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Municipality':
-        code = data.get('code')
-        name = data.get('name') or data.get('nom')
-        if not code or not name:
-            raise ValueError("Code and name are required")
+        # department_code is optional; name is required
+        _ensure_fields(data, required=['code', 'name'], optional=['department_code'])
         return cls(
-            code=code,
-            name=name,
+            code=data['code'],
+            name=data['name'],
             department_code=data.get('department_code')
         )
 
@@ -66,13 +76,11 @@ class Department(GeoEntity):
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Department':
-        code = data.get('code')
-        name = data.get('name')
-        if not code or not name:
-            raise ValueError("Code and name are required")
+        # region_code is optional
+        _ensure_fields(data, required=['code', 'name'], optional=['region_code'])
         return cls(
-            code=code,
-            name=name,
+            code=data['code'],
+            name=data['name'],
             region_code=data.get('region_code')
         )
 
@@ -87,13 +95,10 @@ class Region(GeoEntity):
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Region':
-        code = data.get('code')
-        name = data.get('name')
-        if not code or not name:
-            raise ValueError("Code and name are required")
+        _ensure_fields(data, required=['code', 'name'])
         return cls(
-            code=code,
-            name=name
+            code=data['code'],
+            name=data['name']
         )
 
 class Parcel(GeoEntity):
@@ -109,14 +114,12 @@ class Parcel(GeoEntity):
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Parcel':
-        code = data.get('code')
-        name = data.get('name')
-        if not code or not name:
-            raise ValueError("Code and name are required")
+        # commune_code is required, section is optional; name is required
+        _ensure_fields(data, required=['code', 'commune_code', 'name'], optional=['section'])
         return cls(
-            code=code,
-            name=name,
-            commune_code=data.get('commune_code'),
+            code=data['code'],
+            name=data['name'],
+            commune_code=data['commune_code'],
             section=data.get('section')
         )
 
@@ -132,12 +135,10 @@ class Section(GeoEntity):
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Section':
-        code = data.get('code')
-        name = data.get('name')
-        if not code or not name:
-            raise ValueError("Code and name are required")
+        # commune_code is required; name is required
+        _ensure_fields(data, required=['code', 'commune_code', 'name'])
         return cls(
-            code=code,
-            name=name,
-            commune_code=data.get('commune_code')
+            code=data['code'],
+            name=data['name'],
+            commune_code=data['commune_code']
         )
