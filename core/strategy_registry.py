@@ -6,8 +6,11 @@ hard‑coding them in the ``SelectorFactory``. Each strategy registers itself at
 import time via ``register_strategy``.
 """
 
+import logging
 from typing import Dict, Type
 from core.strategy import ApiStrategy
+
+logger = logging.getLogger(__name__)
 
 _registry: Dict[str, Type[ApiStrategy]] = {}
 
@@ -23,6 +26,7 @@ def register_strategy(name: str, cls: Type[ApiStrategy]) -> None:
         The concrete strategy class.
     """
     _registry[name.lower()] = cls
+    logger.info("Strategy '%s' registered: %s", name, cls)
 
 
 def get_strategy_class(name: str) -> Type[ApiStrategy]:

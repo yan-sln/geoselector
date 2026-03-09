@@ -1,10 +1,14 @@
 """
 Selectors typés génériques
 """
+
+import logging
 from typing import Type, List, Dict, Generic, TypeVar
 from abc import ABC, abstractmethod
 from .service import GeoService
 from .entities import GeoEntity
+
+logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=GeoEntity)
 
@@ -48,7 +52,9 @@ class EntitySelectorImpl(EntitySelector[T]):
         """
         Rechercher des entités
         """
+        logger.debug("Selecting entities for %s with text='%s'", self.entity_class.__name__, text)
         results = self.service.search_entities(self.entity_class, text, limit=None)
+        logger.info("Selector returned %d results for %s", len(results), self.entity_class.__name__)
         # Cast to List[T] to satisfy type checker; from_dict returns a subclass of GeoEntity
         from typing import cast
         return cast(List[T], [self.entity_class.from_dict(item) for item in results])
@@ -57,10 +63,16 @@ class EntitySelectorImpl(EntitySelector[T]):
         """
         Récupérer la géométrie
         """
-        return self.service.fetch_entity_geometry(self.entity_class, code)
+        logger.debug("Fetching geometry for %s code=%s", self.entity_class.__name__, code)
+        geometry = self.service.fetch_entity_geometry(self.entity_class, code)
+        logger.info("Fetched geometry for %s code=%s", self.entity_class.__name__, code)
+        return geometry
 
     def get_details(self, code: str) -> Dict:
         """
         Récupérer les détails
         """
-        return self.service.get_entity_details(self.entity_class, code)
+        logger.debug("Fetching details for %s code=%s", self.entity_class.__name__, code)
+        details = self.service.get_entity_details(self.entity_class, code)
+        logger.info("Fetched details for %s code=%s", self.entity_class.__name__, code)
+        return details

@@ -25,10 +25,13 @@ class SelectorFactory:
     @classmethod
     def _get_service(cls, api_source: str) -> GeoService:
         """Retrieve or create a cached GeoService for the given API source."""
-        if api_source not in cls._services:
-            strategy_cls = get_strategy_class(api_source)
-            strategy = strategy_cls()
-            cls._services[api_source] = GeoService(strategy)
+        if api_source in cls._services:
+            logger.debug("Cache hit for API source '%s'", api_source)
+            return cls._services[api_source]
+        logger.debug("Cache miss for API source '%s' – creating new service", api_source)
+        strategy_cls = get_strategy_class(api_source)
+        strategy = strategy_cls()
+        cls._services[api_source] = GeoService(strategy)
         return cls._services[api_source]
 
     @classmethod
@@ -42,6 +45,7 @@ class SelectorFactory:
         entity_class: Type[T],
         api_source: str
     ) -> EntitySelector[T]:
-        # Retrieve or create a cached GeoService for the requested API source
+        """Create a selector for the given entity class and API source."""
         service = cls._get_service(api_source)
+        logger.info("Creating selector for %s using API source '%s'", entity_class.__name__, api_source)
         return EntitySelectorImpl(entity_class, service)

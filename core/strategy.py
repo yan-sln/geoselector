@@ -34,10 +34,13 @@ class ApiStrategy(ABC):
 
         Gère les erreurs, applique le timeout de recherche et renvoie le JSON décodé.
         """
+        logger.debug("Request %s %s kwargs=%s", method, url, kwargs)
         try:
             response = self.session.request(method, url, timeout=self.timeout_search, **kwargs)
             response.raise_for_status()
-            return response.json()
+            data = response.json()
+            logger.info("Successful %s request to %s – received %s", method, url, type(data).__name__)
+            return data
         except requests.RequestException as e:
             logger.error(f"[ApiStrategy] {method} {url} → {e}")
             return None

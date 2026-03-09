@@ -155,3 +155,29 @@ details = selector.get_details(results[0].code)
 
 ---
 _Documentation générée automatiquement_
+
+## 9. **Logging intégré**
+
+Le projet utilise désormais un système de logging centralisé via le fichier [`logging_config.py`](logging_config.py). Ce module configure :
+
+* Le niveau global (variable d’environnement ``LOG_LEVEL`` ; ``INFO`` par défaut).
+* Un ``StreamHandler`` pour la console (développement) et un ``RotatingFileHandler`` qui écrit dans ``logs/geoselector.log`` (production).
+* Un formatteur incluant la date, le niveau, le nom du logger et le message.
+
+Tous les modules clés (`core.service`, `core.selector`, `api.gouvfr`, `core.registry`, `core.strategy_registry`, `core.strategy`) déclarent un logger avec `logger = logging.getLogger(__name__)` et émettent des messages :
+
+* **DEBUG** : paramètres des requêtes, cache hits/misses, création de selectors.
+* **INFO** : succès des appels API, nombre de résultats retournés, enregistrement d’entités/stratégies.
+* **ERROR** : erreurs de requêtes HTTP ou réponses vides.
+
+Le logger est initialisé dès l’import du package grâce à l’instruction ``import logging_config`` dans le fichier ``__init__.py`` du projet.
+
+---
+
+## 10. **Documentation mise à jour**
+
+Le README a été enrichi avec la section **Logging intégré** décrivant la configuration et l’usage du logger dans le projet.
+
+---
+
+_Documentation générée automatiquement_

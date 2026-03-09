@@ -2,9 +2,12 @@
 Stratégie API Géo.fr (geo.api.gouv.fr)
 """
 
+import logging
 from typing import List, Dict
 from core.strategy import ApiStrategy
 from core.strategy_registry import register_strategy
+
+logger = logging.getLogger(__name__)
 
 
 class GouvFrApiStrategy(ApiStrategy):
@@ -46,8 +49,10 @@ class GouvFrApiStrategy(ApiStrategy):
                 "limit": per_page,
                 "page": current_page,
             }
+            logger.debug("Requesting GouvFr API %s with params %s", url, params)
             data = self._request("GET", url, params=params, timeout=self.timeout_search)
             if not data:
+                logger.error("No data returned from GouvFr API for endpoint %s", endpoint)
                 break
             # Formatte les données selon le endpoint
             if endpoint == "communes":
@@ -63,6 +68,7 @@ class GouvFrApiStrategy(ApiStrategy):
             else:
                 formatted = data
             results.extend(formatted)
+            logger.info("GouvFr %s returned %d items (page %d)", endpoint, len(formatted), current_page)
             if len(data) < per_page:
                 break
             current_page += 1

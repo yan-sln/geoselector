@@ -1,9 +1,13 @@
 """
 Registry des entités géographiques
 """
+
 from __future__ import annotations
 from typing import Type, Dict
 from typing import TYPE_CHECKING
+import logging
+
+logger = logging.getLogger(__name__)
 
 if TYPE_CHECKING:
     from .entities import GeoEntity
@@ -20,6 +24,7 @@ class EntityRegistry:
         Enregistrer une entité
         """
         cls._registry[entity.API_ENDPOINT] = entity
+        logger.info("Entity %s registered for endpoint '%s'", entity.__name__, entity.API_ENDPOINT)
 
     @classmethod
     def get(cls, endpoint: str) -> "Type[GeoEntity]":
