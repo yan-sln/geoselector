@@ -61,10 +61,6 @@ class GouvFrApiStrategy(ApiStrategy):
                 formatted = self._format_departements(data)
             elif endpoint == "regions":
                 formatted = self._format_regions(data)
-            elif endpoint == "parcels":
-                formatted = self._format_parcels(data)
-            elif endpoint == "sections":
-                formatted = self._format_sections(data)
             else:
                 formatted = data
             results.extend(formatted)
@@ -111,29 +107,6 @@ class GouvFrApiStrategy(ApiStrategy):
             formatted.append({
                 "code": item["code"],
                 "name": item["nom"],
-            })
-        return formatted
-
-    def _format_parcels(self, data: List[Dict]) -> List[Dict]:
-        """Formatage des parcelles"""
-        formatted = []
-        for item in data:
-            formatted.append({
-                "code": item["id"],
-                "name": item["identifiant"],
-                "commune_code": item["commune"]["code"],
-                "section": item.get("section", ""),
-            })
-        return formatted
-
-    def _format_sections(self, data: List[Dict]) -> List[Dict]:
-        """Formatage des sections"""
-        formatted = []
-        for item in data:
-            formatted.append({
-                "code": item["id"],
-                "name": item["nom"],
-                "commune_code": item["commune"]["code"],
             })
         return formatted
 

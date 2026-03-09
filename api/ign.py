@@ -21,7 +21,7 @@ class IGNApiStrategy(ApiStrategy):
         partagée et initialiser ``default_limit``.
         """
         super().__init__(default_limit=default_limit)
-        self.base_url = os.getenv("IGN_API_BASE_URL", "https://apicarto.ign.fr/api")
+        self.base_url = os.getenv("IGN_API_BASE_URL", "https://apicarto.ign.fr/api/cadastre")
         self.timeout_search = 5
         self.timeout_geom = 10
         logger.debug("IGNApiStrategy initialized with base_url=%s", self.base_url)
@@ -56,10 +56,6 @@ class IGNApiStrategy(ApiStrategy):
                 formatted = self._format_sections(data)
             elif endpoint in ("parcelles", "parcels"):
                 formatted = self._format_parcels(data)
-            elif endpoint == "departements":
-                formatted = self._format_departements(data)
-            elif endpoint == "regions":
-                formatted = self._format_regions(data)
             else:
                 formatted = data
             results.extend(formatted)
@@ -96,27 +92,6 @@ class IGNApiStrategy(ApiStrategy):
                 "department_code": item.get("departement", {}).get("code"),
                 # ``region`` peut être présent dans certains jeux de données
                 "region_code": item.get("region", {}).get("code") if isinstance(item.get("region"), dict) else None,
-            })
-        return formatted
-
-    def _format_departements(self, data: List[Dict]) -> List[Dict]:
-        """Formatage des départements renvoyés par l'API IGN."""
-        formatted = []
-        for item in data:
-            formatted.append({
-                "code": item.get("code"),
-                "name": item.get("nom"),
-                "region_code": item.get("region", {}).get("code") if isinstance(item.get("region"), dict) else None,
-            })
-        return formatted
-
-    def _format_regions(self, data: List[Dict]) -> List[Dict]:
-        """Formatage des régions renvoyées par l'API IGN."""
-        formatted = []
-        for item in data:
-            formatted.append({
-                "code": item.get("code"),
-                "name": item.get("nom"),
             })
         return formatted
 
