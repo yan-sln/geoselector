@@ -4,6 +4,9 @@
 from abc import ABC, abstractmethod
 from typing import List, Dict
 import requests
+import logging
+
+logger = logging.getLogger(__name__)
 from functools import lru_cache
 
 class ApiStrategy(ABC):
@@ -36,7 +39,7 @@ class ApiStrategy(ABC):
             response.raise_for_status()
             return response.json()
         except requests.RequestException as e:
-            print(f"[ApiStrategy] {method} {url} → {e}")
+            logger.error(f"[ApiStrategy] {method} {url} → {e}")
             return None
 
     @abstractmethod

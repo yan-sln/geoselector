@@ -4,6 +4,10 @@ Stratégie API IGN
 from typing import List, Dict
 from core.strategy import ApiStrategy
 from core.strategy_registry import register_strategy
+import os
+import logging
+
+logger = logging.getLogger(__name__)
 
 class IGNApiStrategy(ApiStrategy):
     """
@@ -17,9 +21,10 @@ class IGNApiStrategy(ApiStrategy):
         partagée et initialiser ``default_limit``.
         """
         super().__init__(default_limit=default_limit)
-        self.base_url = "https://apicarto.ign.fr/api"
+        self.base_url = os.getenv("IGN_API_BASE_URL", "https://apicarto.ign.fr/api")
         self.timeout_search = 5
         self.timeout_geom = 10
+        logger.debug("IGNApiStrategy initialized with base_url=%s", self.base_url)
 
     def search(self, endpoint: str, text: str, limit: int | None = None, page: int = 1) -> List[Dict]:
         """Rechercher des entités via l'API IGN.
@@ -46,8 +51,10 @@ class IGNApiStrategy(ApiStrategy):
                 "limit": per_page,
                 "page": current_page,
             }
+            logger.debug("Requesting IGN API %s with params %s", url, params)
             data = self._request("GET", url, params=params, timeout=self.timeout_search)
             if not data:
+                logger.error("No data returned from IGN API for endpoint %s", endpoint)
                 break
             # Formatte les données selon le endpoint
             if endpoint == "communes":
@@ -59,9 +66,11 @@ class IGNApiStrategy(ApiStrategy):
             else:
                 formatted = data
             results.extend(formatted)
+            logger.debug("Accumulated %d results for endpoint %s (page %d)", len(results), endpoint, current_page)
             if len(data) < per_page:
                 break
             current_page += 1
+        # Loop finished, return accumulated results
         return results
 
     def fetch_details(self, endpoint: str, code: str) -> Dict:
