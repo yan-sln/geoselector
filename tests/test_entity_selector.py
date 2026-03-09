@@ -19,7 +19,7 @@ def test_select_returns_entities(selector):
     mock_data = [
         {"code": "75056", "nom": "Paris", "departement": {"code": "75"}, "region": {"code": "11"}}
     ]
-    responses.add(responses.GET, url, json=mock_data, status=200)
+    responses.add(responses.GET, url, json=mock_data, status=200, match_querystring=True)
 
     results = selector.select(text="Paris")
     assert len(results) == 1
@@ -46,3 +46,34 @@ def test_get_geometry_and_details(selector):
     details = selector.get_details(code)
     assert geometry == mock_geom
     assert details == mock_details
+
+# ----------------------------------------------------------------------
+# Additional entity tests
+# ----------------------------------------------------------------------
+@responses.activate
+def test_select_multiple_entity_types():
+    """Vérifie que le sélecteur fonctionne avec différentes sous‑classes d'entités."""
+    strategy = IGNApiStrategy()
+    service = GeoService(strategy)
+    # Test each entity type
+    for EntityCls in (Department, Region, Parcel, Section):
+        selector = EntitySelectorImpl(EntityCls, service)
+        endpoint = EntityCls.API_ENDPOINT
+        url = f"{strategy.base_url}/{endpoint}"
+        # Mock data appropriate for each entity type
+        if EntityCls is Department:
+            mock_data = [{"code": "75", "nom": "Paris", "region": {"code": "11"}}]
+        elif EntityCls is Region:
+            mock_data = [{"code": "11", "nom": "Île-de-France"}]
+        elif EntityCls is Parcel:
+            mock_data = [{"code": "12345", "identifiant": "Parcel-1", "commune": {"code": "75056"}, "section": "A"}]
+        else:  # Section
+            mock_data = [{"code": "A1", "nom": "Section A1", "commune": {"code": "75056"}}]
+        responses.add(responses.GET, url, json=mock_data, status=200, match_querystring=True)
+        results = selector.select(text="test")
+        assert len(results) == 1
+        entity = results[0]
+        assert isinstance(entity, EntityCls)
+        # Basic attribute checks
+        assert hasattr(entity, "code")
+        assert hasattr(entity, "name")

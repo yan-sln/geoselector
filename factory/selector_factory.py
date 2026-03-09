@@ -2,13 +2,13 @@
 Factory de création de selectors
 """
 from typing import TypeVar, Type, Dict
-from core.selector import EntitySelector, EntitySelectorImpl
-from core.service import GeoService
-from core.strategy import ApiStrategy
-from core.strategy_registry import get_strategy_class
+from ..core.selector import EntitySelector, EntitySelectorImpl
+from ..core.service import GeoService
+from ..core.strategy import ApiStrategy
+from ..core.strategy_registry import get_strategy_class
 
 # Added import for GeoEntity and debug logging
-from core.entities import GeoEntity
+from ..core.entities import GeoEntity
 import logging
 logger = logging.getLogger(__name__)
 logger.debug("GeoEntity imported: %s", GeoEntity)

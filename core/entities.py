@@ -45,7 +45,7 @@ class Municipality(GeoEntity):
     @classmethod
     def from_dict(cls, data: dict) -> 'Municipality':
         code = data.get('code')
-        name = data.get('name')
+        name = data.get('name') or data.get('nom')
         if not code or not name:
             raise ValueError("Code and name are required")
         return cls(

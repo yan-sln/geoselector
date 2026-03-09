@@ -31,12 +31,14 @@ class ApiStrategy(ABC):
 
     def _request(self, method: str, url: str, **kwargs):
         """Wrapper générique autour de ``requests``.
-
-        Gère les erreurs, applique le timeout de recherche et renvoie le JSON décodé.
-        """
+ 
+         Gère les erreurs, applique le timeout de recherche et renvoie le JSON décodé.
+         """
         logger.debug("Request %s %s kwargs=%s", method, url, kwargs)
+        # Extract timeout if provided, otherwise use default search timeout
+        timeout = kwargs.pop('timeout', self.timeout_search)
         try:
-            response = self.session.request(method, url, timeout=self.timeout_search, **kwargs)
+            response = self.session.request(method, url, timeout=timeout, **kwargs)
             response.raise_for_status()
             data = response.json()
             logger.info("Successful %s request to %s – received %s", method, url, type(data).__name__)

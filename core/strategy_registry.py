@@ -8,7 +8,7 @@ import time via ``register_strategy``.
 
 import logging
 from typing import Dict, Type
-from core.strategy import ApiStrategy
+from .strategy import ApiStrategy
 
 logger = logging.getLogger(__name__)
 
