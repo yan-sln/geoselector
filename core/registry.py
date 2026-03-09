@@ -1,24 +1,28 @@
 """
 Registry des entités géographiques
 """
+from __future__ import annotations
 from typing import Type, Dict
-from .entities import GeoEntity
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .entities import GeoEntity
 
 class EntityRegistry:
     """
     Registry global des entités
     """
-    _registry: Dict[str, Type[GeoEntity]] = {}
+    _registry: Dict[str, Type["GeoEntity"]] = {}
 
     @classmethod
-    def register(cls, entity: Type[GeoEntity]) -> None:
+    def register(cls, entity: "Type[GeoEntity]") -> None:
         """
         Enregistrer une entité
         """
         cls._registry[entity.API_ENDPOINT] = entity
 
     @classmethod
-    def get(cls, endpoint: str) -> Type[GeoEntity]:
+    def get(cls, endpoint: str) -> "Type[GeoEntity]":
         """
         Récupérer une entité par endpoint
         """

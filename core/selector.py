@@ -48,7 +48,7 @@ class EntitySelectorImpl(EntitySelector[T]):
         """
         Rechercher des entités
         """
-        results = self.service.search_entities(self.entity_class, text)
+        results = self.service.search_entities(self.entity_class, text, limit=None)
         # Cast to List[T] to satisfy type checker; from_dict returns a subclass of GeoEntity
         from typing import cast
         return cast(List[T], [self.entity_class.from_dict(item) for item in results])

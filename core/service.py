@@ -15,9 +15,9 @@ class GeoService:
     def __init__(self, strategy: ApiStrategy):
         self.strategy = strategy
 
-    def search_entities(self, entity_class: Type[T], text: str) -> List[Dict]:
+    def search_entities(self, entity_class: Type[T], text: str, limit: int | None = None) -> List[Dict]:
         endpoint = entity_class.API_ENDPOINT
-        return self.strategy.search(endpoint, text)
+        return self.strategy.search(endpoint, text, limit)
 
     def fetch_entity_geometry(self, entity_class: Type[T], code: str) -> Dict:
         endpoint = entity_class.API_ENDPOINT
