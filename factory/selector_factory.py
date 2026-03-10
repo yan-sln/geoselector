@@ -17,8 +17,8 @@ T = TypeVar("T", bound="GeoEntity")
 
 class SelectorFactory:
     """
- Factory for creating selectors
- """
+    Factory for creating selectors
+    """
 
     _services: Dict[str, "GeoService"] = {}
 
