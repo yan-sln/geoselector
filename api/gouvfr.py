@@ -1,6 +1,6 @@
 """
   Strategy API Géo.fr (geo.api.gouv.fr) - English documentation
-  """
+"""
 
 import logging
 from typing import List, Dict
@@ -39,10 +39,6 @@ class GouvFrApiStrategy(ApiStrategy):
                 return self._format_departements(data)
             elif endpoint == "regions":
                 return self._format_regions(data)
-            elif endpoint == "parcelles":
-                return self._format_parcels(data)
-            elif endpoint == "sections":
-                return self._format_sections(data)
             else:
                 return data
 
@@ -76,35 +72,6 @@ class GouvFrApiStrategy(ApiStrategy):
                 "code": item["code"],
                 "name": item["nom"],
                 "region_code": item["region"]["code"],
-            })
-        return formatted
-
-    def _format_parcels(self, data: List[Dict]) -> List[Dict]:
-        """Format parcels returned by the GouvFr API.
-
-        Handles ``identifiant`` as name and extracts ``commune`` code.
-        """
-        formatted: List[Dict] = []
-        for item in data:
-            formatted.append({
-                "code": item.get("code") or item.get("id"),
-                "name": item.get("identifiant") or item.get("nom"),
-                "commune_code": item.get("commune", {}).get("code"),
-                "section": item.get("section", ""),
-            })
-        return formatted
-
-    def _format_sections(self, data: List[Dict]) -> List[Dict]:
-        """Format sections returned by the GouvFr API.
-
-        Extracts ``commune`` code and keeps the section name.
-        """
-        formatted: List[Dict] = []
-        for item in data:
-            formatted.append({
-                "code": item.get("code") or item.get("id"),
-                "name": item.get("nom"),
-                "commune_code": item.get("commune", {}).get("code"),
             })
         return formatted
 

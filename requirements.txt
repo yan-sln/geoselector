@@ -5,6 +5,5 @@ vulture
 pylint
 radon
 flake8
-flake8-duplicates
 mutmut
 pytest-cov

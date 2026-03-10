@@ -51,7 +51,7 @@ class IGNApiStrategy(ApiStrategy):
         return data or {}
 
     # ---------------------------------------------------------------------
-    # Specific formatters for the IGN API (similar to those of GouvFr)
+    # Specific formatters for the IGN API
     # ---------------------------------------------------------------------
     def _format_communes(self, data: List[Dict]) -> List[Dict]:
         """Formatting of communes returned by the IGN API."""
@@ -60,9 +60,7 @@ class IGNApiStrategy(ApiStrategy):
             formatted.append({
                 "code": item.get("code"),
                 "name": item.get("nom"),
-                "department_code": item.get("departement", {}).get("code"),
-                # ``region`` may be present in some datasets
-                "region_code": item.get("region", {}).get("code") if isinstance(item.get("region"), dict) else None,
+                "department_code": item.get("departement", {}).get("code")
             })
         return formatted
 

@@ -44,7 +44,3 @@ if not logger.handlers:
 
     # Prevent propagation to parent loggers to avoid duplicate output
     logger.propagate = False
-
-# Optional: enable DEBUG for the ``api.ign`` module via environment variable
-if os.getenv("LOG_DEBUG_IGN"):
-    logging.getLogger("api.ign").setLevel(logging.DEBUG)
