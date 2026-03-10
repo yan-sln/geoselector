@@ -19,7 +19,7 @@ def gouvfr_strategy():
 # ----------------------------------------------------------------------
 @responses.activate
 def test_ign_search_success(ign_strategy):
-    # Mock de la réponse de l’API IGN pour le endpoint "communes"
+    # Mock of the IGN API response for the "communes" endpoint
     url = f"{ign_strategy.base_url}/communes"
     mock_body = [
         {"code": "75056", "nom": "Paris", "departement": {"code": "75"}, "region": {"code": "11"}}

@@ -1,5 +1,5 @@
 """
-Entités géographiques
+Geographic entities
 """
 from typing import Optional
 from abc import ABC, abstractmethod
@@ -19,14 +19,14 @@ def _ensure_fields(data: dict, required: list[str], optional: list[str] = []) ->
 
 class GeoEntity(ABC):
     """
-    Classe de base pour toutes les entités géographiques
+    Base class for all geographic entities
     """
     API_ENDPOINT: str = ""
 
     def __init_subclass__(cls, **kwargs):
         super().__init_subclass__(**kwargs)
         if cls.API_ENDPOINT:
-            EntityRegistry.register(cls)
+            EntityRegistry._register(cls)
 
     def __init__(self, code: str, name: str):
         self.code = code
@@ -36,17 +36,17 @@ class GeoEntity(ABC):
     @abstractmethod
     def from_dict(cls, data: dict) -> 'GeoEntity':
         """
-        Création depuis un dictionnaire
+        Creation from a dictionary
         """
         pass
 
 # -------------------------------
-# Entités spécifiques
+# Specific entities
 # -------------------------------
 
 class Municipality(GeoEntity):
     """
-    Entité commune
+    Municipality entity
     """
     API_ENDPOINT = "communes"
 
@@ -66,7 +66,7 @@ class Municipality(GeoEntity):
 
 class Department(GeoEntity):
     """
-    Entité département
+    Department entity
     """
     API_ENDPOINT = "departements"
 
@@ -107,7 +107,7 @@ class Department(GeoEntity):
 
 class Region(GeoEntity):
     """
-    Entité région
+    Region entity
     """
     API_ENDPOINT = "regions"
 
@@ -133,7 +133,7 @@ class Region(GeoEntity):
 
 class Parcel(GeoEntity):
     """
-    Entité parcelle cadastrale
+    Parcel entity
     """
     API_ENDPOINT = "parcelles"
 
@@ -155,7 +155,7 @@ class Parcel(GeoEntity):
 
 class Section(GeoEntity):
     """
-    Entité section cadastrale
+    Section entity
     """
     API_ENDPOINT = "sections"
 

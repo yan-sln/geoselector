@@ -1,4 +1,3 @@
-import pytest
 import responses
 from core.service import GeoService
 from api.ign import IGNApiStrategy

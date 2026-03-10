@@ -1,6 +1,6 @@
 """
-Stratégie API IGN
-"""
+ IGN API Strategy
+ """
 from typing import List, Dict
 from core.strategy import ApiStrategy
 from core.strategy_registry import register_strategy
@@ -15,10 +15,10 @@ class IGNApiStrategy(ApiStrategy):
     """
 
     def __init__(self, default_limit: int = 10):
-        """Initialise la stratégie IGN.
+        """Initialize the IGN strategy.
 
-        Appelle le constructeur de la classe abstraite pour créer la session HTTP
-        partagée et initialiser ``default_limit``.
+        Calls the abstract class constructor to create the shared HTTP session
+        and initialize ``default_limit``.
         """
         super().__init__(default_limit=default_limit)
         self.base_url = os.getenv("IGN_API_BASE_URL", "https://apicarto.ign.fr/api/cadastre")
@@ -27,76 +27,47 @@ class IGNApiStrategy(ApiStrategy):
         logger.debug("IGNApiStrategy initialized with base_url=%s", self.base_url)
 
     def search(self, endpoint: str, text: str, limit: int | None = None, page: int = 1) -> List[Dict]:
-        """Rechercher des entités via l'API IGN.
+        """Search for entities via the IGN API.
 
-        Parameters
-        ----------
-        endpoint: str
-            Le point d'accès de l'API (ex. ``communes``, ``sections``, ``parcelles``).
-        text: str
-            Le texte de recherche.
-        limit: int | None, optional
-            Nombre maximal de résultats souhaités. Si ``None``, utilise ``default_limit``.
-        page: int, optional
-            Page de résultats à récupérer (début à 1).
+        The implementation now delegates pagination to the base class helper
+        :meth:`core.strategy.ApiStrategy._paged_fetch`.
         """
-        url = f"{self.base_url}/{endpoint}"
-        overall_limit = self.get_limit(limit)
-        results: List[Dict] = []
-        while len(results) < overall_limit:
-            logger.debug("Requesting IGN API %s", url)
-            data = self._request("GET", url, timeout=self.timeout_search)
-            if not data:
-                logger.error("No data returned from IGN API for endpoint %s", endpoint)
-                break
-            # Format data according to endpoint
+        def formatter(data: List[Dict]) -> List[Dict]:
             if endpoint == "communes":
-                formatted = self._format_communes(data)
+                return self._format_communes(data)
             elif endpoint == "sections":
-                formatted = self._format_sections(data)
+                return self._format_sections(data)
             elif endpoint == "parcelles":
-                formatted = self._format_parcels(data)
+                return self._format_parcels(data)
             else:
-                formatted = data
-            results.extend(formatted)
-            # If no new items were added, break to avoid infinite loop
-            if not formatted:
-                break
-            # If limit is None (caller wants all results), break after first fetch
-            if limit is None:
-                break
-            # If we have reached the desired number of results, stop fetching more pages
-            if len(results) >= overall_limit:
-                break
-            # Increment page for potential pagination (not used in current tests)
-            page += 1
-        # Return up to overall_limit items
-        return results[:overall_limit]
+                return data
+
+        return self._paged_fetch(endpoint, text, limit=limit, page=page, formatter=formatter)
 
     def fetch_details(self, endpoint: str, code: str) -> Dict:
-        """Récupérer les détails d'une entité via l'API IGN (mise en cache)."""
+        """Retrieve the details of an entity via the IGN API (cached)."""
         data = self._cached_fetch(endpoint, code)
         # Return raw data for details to match test expectations
         return data or {}
 
     # ---------------------------------------------------------------------
-    # Formatteurs spécifiques à l'API IGN (similaires à ceux de GouvFr)
+    # Specific formatters for the IGN API (similar to those of GouvFr)
     # ---------------------------------------------------------------------
     def _format_communes(self, data: List[Dict]) -> List[Dict]:
-        """Formatage des communes renvoyées par l'API IGN."""
+        """Formatting of communes returned by the IGN API."""
         formatted = []
         for item in data:
             formatted.append({
                 "code": item.get("code"),
                 "name": item.get("nom"),
                 "department_code": item.get("departement", {}).get("code"),
-                # ``region`` peut être présent dans certains jeux de données
+                # ``region`` may be present in some datasets
                 "region_code": item.get("region", {}).get("code") if isinstance(item.get("region"), dict) else None,
             })
         return formatted
 
     def _format_sections(self, data: List[Dict]) -> List[Dict]:
-        """Formatage des sections cadastrales renvoyées par l'API IGN."""
+        """Formatting of cadastral sections returned by the IGN API."""
         formatted = []
         for item in data:
             formatted.append({
@@ -118,5 +89,5 @@ class IGNApiStrategy(ApiStrategy):
             })
         return formatted
 
-# Enregistrement de la stratégie IGN pour la découverte dynamique
+# Register the IGN strategy for dynamic discovery
 register_strategy('ign', IGNApiStrategy)
