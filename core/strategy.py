@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 from typing import List, Dict
 import requests
 import logging
-from urllib.parse import quote_plus
 from typing import Callable
 
 logger = logging.getLogger(__name__)
@@ -169,7 +168,7 @@ class ApiStrategy(ABC):
             # Subclasses may ignore ``text`` and ``page`` if they do not support
             # pagination.
             per_page = min(self.default_limit, overall_limit - len(results)) if limit is not None else self.default_limit
-            params = {"q": quote_plus(text), "limit": per_page, "page": current_page}
+            # params were previously constructed but not used; removed to avoid unused variable warning.
             url = f"{self.base_url}/{endpoint}"
             try:
                 # For testing with mocked responses that register the URL without query parameters,

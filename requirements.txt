@@ -1,3 +1,10 @@
 pytest==9.0.2
 responses==0.26.0
 requests>=2.31.0
+vulture
+pylint
+radon
+flake8
+flake8-duplicates
+mutmut
+pytest-cov
