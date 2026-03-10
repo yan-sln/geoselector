@@ -76,12 +76,33 @@ class Department(GeoEntity):
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Department':
-        # region_code is optional
-        _ensure_fields(data, required=['code', 'name'], optional=['region_code'])
+        """Create a Department instance from a dictionary.
+        Supports both 'name' and 'nom' keys for the department name, and extracts
+        the region code from either a direct 'region_code' field or a nested
+        'region' dictionary as returned by the IGN API.
+        """
+        # Validate required 'code' field
+        if 'code' not in data or not isinstance(data['code'], str):
+            raise ValueError("Missing or invalid required field 'code'.")
+        # Resolve name from 'name' or 'nom'
+        name = data.get('name') or data.get('nom')
+        if not isinstance(name, str):
+            raise ValueError("Missing or invalid required field 'name'.")
+        # Extract region_code if present and ensure it's a string
+        region_code = None
+        if 'region_code' in data:
+            if isinstance(data['region_code'], str):
+                region_code = data['region_code']
+            else:
+                raise ValueError("Invalid type for 'region_code'; expected string.")
+        elif 'region' in data and isinstance(data['region'], dict):
+            rc = data['region'].get('code')
+            if isinstance(rc, str):
+                region_code = rc
         return cls(
             code=data['code'],
-            name=data['name'],
-            region_code=data.get('region_code')
+            name=name,
+            region_code=region_code
         )
 
 class Region(GeoEntity):
@@ -95,17 +116,26 @@ class Region(GeoEntity):
 
     @classmethod
     def from_dict(cls, data: dict) -> 'Region':
-        _ensure_fields(data, required=['code', 'name'])
+        """Create a Region instance from a dictionary.
+        Accepts both 'name' and 'nom' keys for the region name.
+        """
+        # Validate required 'code'
+        if 'code' not in data or not isinstance(data['code'], str):
+            raise ValueError("Missing or invalid required field 'code'.")
+        # Resolve name from 'name' or 'nom'
+        name = data.get('name') or data.get('nom')
+        if not isinstance(name, str):
+            raise ValueError("Missing or invalid required field 'name'.")
         return cls(
             code=data['code'],
-            name=data['name']
+            name=name
         )
 
 class Parcel(GeoEntity):
     """
     Entité parcelle cadastrale
     """
-    API_ENDPOINT = "parcels"
+    API_ENDPOINT = "parcelles"
 
     def __init__(self, code: str, name: str, commune_code: Optional[str] = None, section: Optional[str] = None):
         super().__init__(code, name)

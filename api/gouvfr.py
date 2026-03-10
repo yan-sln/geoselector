@@ -6,6 +6,7 @@ import logging
 from typing import List, Dict
 from core.strategy import ApiStrategy
 from core.strategy_registry import register_strategy
+from urllib.parse import quote_plus
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +46,7 @@ class GouvFrApiStrategy(ApiStrategy):
         while len(results) < overall_limit:
             per_page = min(self.default_limit, overall_limit - len(results))
             params = {
-                "q": text,
+                "q": quote_plus(text),
                 "limit": per_page,
                 "page": current_page,
             }

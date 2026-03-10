@@ -54,7 +54,7 @@ class IGNApiStrategy(ApiStrategy):
                 formatted = self._format_communes(data)
             elif endpoint == "sections":
                 formatted = self._format_sections(data)
-            elif endpoint in ("parcelles", "parcels"):
+            elif endpoint == "parcelles":
                 formatted = self._format_parcels(data)
             else:
                 formatted = data
