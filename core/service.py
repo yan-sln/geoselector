@@ -1,82 +1,79 @@
+"""Service layer for GeoSelector.
+
+Provides :class:`GeoService` which orchestrates searches and geometry fetching
+using :class:`core.api_client.ApiClient` and the entity classes defined in
+:mod:`core.entities`.
 """
- Central service for querying the APIs
- """
+
+from __future__ import annotations
 
 import logging
-from typing import TypeVar, Type, List, Dict
-from .strategy import ApiStrategy
+from typing import List, Type, TypeVar
+
+from .api_client import ApiClient
 from .entities import GeoEntity
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=GeoEntity)
 
-class GeoService:
-    """Central service for querying the various geographic APIs.
 
-    The service delegates the actual HTTP work to an ``ApiStrategy``
-    implementation (e.g. :class:`api.gouvfr.GouvFrApiStrategy` or
-    :class:`api.ign.IGNApiStrategy`). It provides thin, typed wrappers around
-    the strategy methods and adds logging for tracing.
+class GeoService:
+    """High‑level service exposing search and geometry operations.
+
+    Parameters
+    ----------
+    client:
+        An instance of :class:`ApiClient` configured with the appropriate JSON
+        configuration.
     """
 
-    def __init__(self, strategy: ApiStrategy):
-        """Create a ``GeoService`` with the given ``strategy``.
+    def __init__(self, client: ApiClient):
+        self.client = client
 
-        Parameters
-        ----------
-        strategy: ApiStrategy
-            Concrete strategy instance responsible for the HTTP requests.
+    # ---------------------------------------------------------------------
+    # Search helpers
+    # ---------------------------------------------------------------------
+    def search_entities(self, entity_cls: Type[T], text: str, limit: int | None = None) -> List[T]:
+        """Search for entities of *entity_cls* matching *text*.
+
+        The method decides whether to use ``search_by_name`` or ``search_by_code``
+        based on a simple heuristic: if the text looks like a numeric code (or is
+        short) we treat it as a code, otherwise as a name.
         """
-        self.strategy = strategy
-
-    def search_entities(self, entity_class: Type[T], text: str, limit: int | None = None) -> List[Dict]:
-        """Search for entities of ``entity_class`` matching ``text``.
-
-        Parameters
-        ----------
-        entity_class: Type[T]
-            The concrete :class:`core.entities.GeoEntity` subclass to search.
-        text: str
-            Search query string.
-        limit: int | None, optional
-            Maximum number of results to return. ``None`` uses the strategy's
-            default limit.
-        """
-        endpoint = entity_class.API_ENDPOINT
-        logger.debug("Searching entities for endpoint %s with text='%s' limit=%s", endpoint, text, limit)
-        results = self.strategy.search(endpoint, text, limit)
-        logger.info("Search returned %d results for endpoint %s", len(results), endpoint)
+        entity_key = entity_cls.__name__.lower()
+        # Heuristic for operation selection.
+        if text.isdigit() or len(text) <= 3:
+            mode = "search_by_code"
+        else:
+            mode = "search_by_name"
+        # Some entities (e.g. feuille, parcelle) only have a generic ``search``
+        # operation. Fall back to that if the chosen mode is unavailable.
+        try:
+            raw_features = self.client.search(entity_key, mode, value=text, limit=limit)
+        except Exception as exc:  # pragma: no cover – defensive
+            logger.error("Search failed for %s with mode %s: %s", entity_key, mode, exc)
+            raw_features = []
+        results: List[T] = []
+        for raw in raw_features:
+            try:
+                obj = entity_cls.from_api(raw)
+                obj.set_service(self)  # type: ignore[arg-type]
+                results.append(obj)
+            except Exception as exc:  # pragma: no cover – defensive
+                logger.error("Failed to instantiate %s from API data: %s", entity_cls.__name__, exc)
         return results
 
-    def fetch_entity_geometry(self, entity_class: Type[T], code: str) -> Dict:
-        """Fetch geometry for a specific entity identified by ``code``.
-
-        Parameters
-        ----------
-        entity_class: Type[T]
-            The entity type whose geometry is requested.
-        code: str
-            Unique identifier of the entity.
+    # ---------------------------------------------------------------------
+    # Geometry helpers
+    # ---------------------------------------------------------------------
+    def fetch_entity_geometry(self, entity_cls: Type[GeoEntity], code: str) -> dict | None:
+        """Fetch geometry for a given *entity_cls* identified by *code*.
         """
-        endpoint = entity_class.API_ENDPOINT
-        logger.debug("Fetching geometry for endpoint %s code=%s", endpoint, code)
-        geometry = self.strategy.fetch_geometry(endpoint, code)
-        logger.info("Fetched geometry for endpoint %s code=%s", endpoint, code)
-        return geometry
-
-    def get_entity_details(self, entity_class: Type[T], code: str) -> Dict:
-        """Retrieve detailed information for a specific entity.
-
-        Parameters
-        ----------
-        entity_class: Type[T]
-            The entity type.
-        code: str
-            Unique identifier of the entity.
-        """
-        endpoint = entity_class.API_ENDPOINT
-        logger.debug("Fetching details for endpoint %s code=%s", endpoint, code)
-        details = self.strategy.fetch_details(endpoint, code)
-        logger.info("Fetched details for endpoint %s code=%s", endpoint, code)
-        return details
+        entity_key = entity_cls.__name__.lower()
+        try:
+            geometry = self.client.fetch_geometry(entity_key, value=code)
+            return geometry
+        except Exception as exc:  # pragma: no cover – defensive
+            logger.error("Geometry fetch failed for %s (%s): %s", entity_key, code, exc)
+            return None

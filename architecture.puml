@@ -1,0 +1,116 @@
+@startuml
+' ==========================================================
+' Packages and core components
+' ==========================================================
+package core {
+
+    ' ---------- Request template ----------
+    class RequestTemplate {
+        +SERVICE : str = "WFS"
+        +VERSION : str = "2.0.0"
+        +REQUEST : str = "GetFeature"
+        +OUTPUTFORMAT : str = "application/json"
+        +build(typename: str, propertyname: str, cql: str | None = None, extra: dict = {}) : dict
+    }
+
+    ' ---------- API client ----------
+    class ApiClient {
+        -config : dict
+        -template : RequestTemplate
+        +__init__(config_path: str)
+        +search(entity: str, mode: str, **values) : list[dict]
+        +fetch_geometry(entity: str, **values) : dict | None
+        -_build_url(entity: str, operation: str, **values) : str
+        -_cached_get(url: str) : dict
+    }
+
+    ' ---------- GeoEntity (minimal + attributes from JSON) ----------
+    abstract class GeoEntity {
+        +code : str                ' primary identifier (code_insee, idu, etc.)
+        -_geometry : dict | None
+        -_service : GeoService | None
+        +set_service(s: GeoService) : None
+        +get_geometry(force: bool = False) : dict
+        +has_geometry() : bool
+    }
+
+    class Region {
+        +code : str                ' code_insee
+        +name : str                ' nom_officiel
+    }
+    class Departement {
+        +code : str                ' code_insee
+        +name : str                ' nom_officiel
+    }
+    class Commune {
+        +code : str                ' code_insee
+        +name : str                ' nom_com
+    }
+    class Arrondissement {
+        +code_insee : str
+        +name : str                ' nom_arr
+        +code_arr : str
+    }
+    class Feuille {
+        +code_insee : str
+        +section : str
+        +feuille : str
+    }
+    class Parcelle {
+        +code_insee : str
+        +section : str
+        +numero : str
+        +idu : str
+    }
+    class SubdivisionFiscale {
+        +gid : str
+        +idu_parcel : str
+        +lettre : str
+    }
+
+    GeoEntity <|-- Region
+    GeoEntity <|-- Departement
+    GeoEntity <|-- Commune
+    GeoEntity <|-- Arrondissement
+    GeoEntity <|-- Feuille
+    GeoEntity <|-- Parcelle
+    GeoEntity <|-- SubdivisionFiscale
+
+    ' ---------- Service ----------
+    class GeoService {
+        -client : ApiClient
+        +__init__(client: ApiClient)
+        +search_entities(cls: Type[GeoEntity], text: str, limit: int | None = None) : list[GeoEntity]
+        +fetch_entity_geometry(cls: Type[GeoEntity], code: str) : dict
+    }
+    note right of GeoService
+        search_entities adapts to the entity type:
+        - For Region, Departement, Commune → limit (e.g., 5) is applied to the WFS request.
+        - For Parcelle, Feuille, SubdivisionFiscale → no limit is applied; all matching results are returned.
+        The limit is passed as the optional `limit` argument and is used only when the JSON configuration defines a `search_by_name`/`search_by_code` operation that supports pagination.
+    end note
+
+    ' ---------- Selector ----------
+    class SelectorImpl {
+        -entity_cls : Type[GeoEntity]
+        -service : GeoService
+        +__init__(entity_cls: Type[GeoEntity], service: GeoService)
+        +select(text: str) : list[GeoEntity]
+        +get_geometry(code: str) : dict
+    }
+
+    ' ---------- Factory ----------
+    class SelectorFactory {
+        -_services : dict[str, GeoService]
+        +create_selector(entity_cls: Type[GeoEntity]) : SelectorImpl
+    }
+}
+' ==========================================================
+' Relations
+' ==========================================================
+ApiClient --> RequestTemplate : uses
+GeoService --> ApiClient : uses
+SelectorImpl --> GeoService : uses
+SelectorFactory --> GeoService : caches
+SelectorFactory --> SelectorImpl : creates
+@enduml
