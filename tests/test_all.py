@@ -161,15 +161,15 @@ if __name__ == "__main__":
 
     # Arrondissement
     arr_selector = SelectorFactory.create_selector(Arrondissement)
-    arr_res = arr_selector.select('59521')
+    arr_res = arr_selector.select('75056')
     print('Arrondissement recherche :', arr_res)
-    arr_geom = arr_selector.get_geometry('59521')
+    arr_geom = arr_selector.get_geometry('75056')
     print('Géométrie récupérée avec succès !' if arr_geom else 'Échec de la récupération de la géométrie.')
 
     # Section
     se_selector = SelectorFactory.create_selector(Section)
     se_res = se_selector.select('59521')
-    print('Feuille recherche :', se_res)
+    print('Section recherche :', se_res[:2])
     se_geom = se_selector.get_geometry('59521')
     print('Géométrie récupérée avec succès !' if se_geom else 'Échec de la récupération de la géométrie.')
 
@@ -183,13 +183,13 @@ if __name__ == "__main__":
     # Parcelle
     parc_selector = SelectorFactory.create_selector(Parcelle)
     parc_res = parc_selector.select('59521', 'ZC')
-    print('Parcelles listées :', parc_res)
+    print('Parcelles listées :', parc_res[:2])
     parc_geom = parc_selector.get_geometry('59521')
     print('Géométrie récupérée avec succès !' if parc_geom else 'Échec de la récupération de la géométrie.')
 
     # Subdivision Fiscale
     sub_selector = SelectorFactory.create_selector(SubdivisionFiscale)
-    sub_res = sub_selector.select('59521')
+    sub_res = sub_selector.select('59521000ZC0063')
     print('Subdivision fiscale recherche :', sub_res)
-    sub_geom = sub_selector.get_geometry('59521')
+    sub_geom = sub_selector.get_geometry('59521000ZC0063')
     print('Géométrie récupérée avec succès !' if sub_geom else 'Échec de la récupération de la géométrie.')
