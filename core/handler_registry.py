@@ -32,16 +32,16 @@ class HandlerRegistry:
 
     @staticmethod
     def _build_handler(operation: str, service: GeoService):
-        """Create a handler that forwards the call to the underlying ``ApiClient``.
-+
-+        The selector builds a ``filters`` dictionary matching the placeholders
-+        required by the operation's ``CQL_FILTER``. This generic handler uses the
-+        actual operation name (as defined in the configuration) when invoking
-+        ``service.client.search``.
-+        """
+        """Create a handler that returns instantiated entity objects.
+
+        The handler performs a low‑level ``client.search`` using the exact
+        operation name from the configuration, then converts the raw feature
+        dictionaries into entity instances via ``service._instantiate``.
+        """
         def handler(selector, filters):
             entity_key = selector.service._entity_key(selector.entity_cls)
-            return service.client.search(entity_key, operation, **filters)
+            raw = service.client.search(entity_key, operation, **filters)
+            return service._instantiate(selector.entity_cls, raw)
 
         return handler
 
