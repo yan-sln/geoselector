@@ -27,21 +27,23 @@ class HandlerRegistry:
         """
         entities_cfg = service.client.config.get("entities", {})
         for entity_key, cfg in entities_cfg.items():
-            for op in ("search_by_name", "search_by_code", "list_search", "search"):
-                if op in cfg:
-                    cls._registry[(entity_key, op)] = cls._build_handler(op, service)
+            for op_name in cfg.keys():
+                cls._registry[(entity_key, op_name)] = cls._build_handler(op_name, service)
 
     @staticmethod
     def _build_handler(operation: str, service: GeoService):
-        if operation == "search_by_name":
-            return lambda selector, filters: service.search_by_name(selector.entity_cls, filters["value"])
-        if operation == "search_by_code":
-            return lambda selector, filters: service.search_by_code(selector.entity_cls, filters["value"])
-        if operation == "list_search":
-            return lambda selector, filters: service.list_search(selector.entity_cls, **filters)
-        if operation == "search":
-            return lambda selector, filters: service.list_entities(selector.entity_cls, **filters)
-        raise NotImplementedError(f"Unsupported operation '{operation}'")
+        """Create a handler that forwards the call to the underlying ``ApiClient``.
++
++        The selector builds a ``filters`` dictionary matching the placeholders
++        required by the operation's ``CQL_FILTER``. This generic handler uses the
++        actual operation name (as defined in the configuration) when invoking
++        ``service.client.search``.
++        """
+        def handler(selector, filters):
+            entity_key = selector.service._entity_key(selector.entity_cls)
+            return service.client.search(entity_key, operation, **filters)
+
+        return handler
 
     @classmethod
     def get(cls, entity_key: str, operation: str):

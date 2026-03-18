@@ -114,45 +114,60 @@ class SelectorImpl:
         filters = _build_filter(operation_cfg, args)
         return handler(self, filters)
 
-    def get_geometry(self, identifier: str | dict) -> dict | None:
+    def get_geometry(self, *args, **kwargs) -> dict | None:
         """Retrieve geometry for the entity.
-        
-        * ``identifier`` can be a simple string (the value for the sole placeholder
-        defined in the ``geometry`` block) **or** a dictionary providing explicit
-        parameters when the geometry CQL filter contains multiple placeholders
-        (e.g. {"feature_id": "12345"} for parcels).
+
+        * ``*args`` and ``**kwargs`` allow flexible identification of the geometry.
+        * If the first positional argument is a ``dict`` it is forwarded directly to the client.
+        * A single string argument follows the original behavior.
+        * Multiple positional arguments are mapped to placeholders via ``_build_filter``.
         """
         logger.debug(
-            "SelectorImpl.get_geometry called for %s with identifier %s",
+            "SelectorImpl.get_geometry called for %s with args=%s kwargs=%s",
             self.entity_cls.__name__,
-            identifier,
+            args,
+            kwargs,
         )
-        # Inspect geometry configuration to see if a ``featureId`` placeholder is used.
+        # Resolve entity and geometry configuration.
         entity_key = self.service._entity_key(self.entity_cls)
         entity_cfg = self.service.client.config.get("entities", {}).get(entity_key, {})
         geometry_cfg = entity_cfg.get("geometry", {})
         placeholders = _extract_placeholders(geometry_cfg.get("CQL_FILTER", ""))
 
-        # If a dict is provided we forward it directly to the ApiClient.
-        if isinstance(identifier, dict):
-            return self.service.client.fetch_geometry(entity_key, **identifier)
+        # 1️⃣ If a dict is passed as the first positional argument, forward it.
+        if args and isinstance(args[0], dict):
+            return self.service.client.fetch_geometry(entity_key, **args[0])
 
-        # When ``featureId`` is required we first perform a ``list_search`` to
-        # obtain the identifier, then fetch the geometry.
+        # 2️⃣ If keyword arguments are provided, treat them as filters.
+        if kwargs:
+            return self.service.client.fetch_geometry(entity_key, **kwargs)
+
+        # Ensure at least one positional argument.
+        if not args:
+            raise ValueError("get_geometry requires at least one argument")
+
+        identifier = args[0]
+
+        # 3️⃣ Handle legacy featureId logic.
         if "featureId" in geometry_cfg:
-            if not placeholders:
-                return None
-            filter_dict = {placeholders[0]: identifier}
-            for ph in placeholders[1:]:
-                filter_dict[ph] = ""
-            raw_features = self.service.client.search(entity_key, "list_search", **filter_dict)
+            # Determine the appropriate list_search operation name (e.g. "list_search_parcelle").
+            list_search_op = next((k for k in entity_cfg.keys() if k.startswith("list_search")), "list_search")
+            # Use the operation's configuration to build the filter dictionary.
+            operation_cfg = entity_cfg.get(list_search_op, {})
+            filters = _build_filter(operation_cfg, args)
+            raw_features = self.service.client.search(entity_key, list_search_op, **filters)
             if raw_features:
                 feature_id = raw_features[0].get("id")
                 if feature_id:
                     return self.service.client.fetch_geometry(entity_key, featureId=feature_id)
             return None
 
-        # Fallback – delegate to the service's geometry helper.
+        # 4️⃣ No featureId required – if multiple args, build filters and fetch.
+        if len(args) > 1:
+            filters = _build_filter(geometry_cfg, args)
+            return self.service.client.fetch_geometry(entity_key, **filters)
+
+        # 5️⃣ Fallback to service helper for simple code lookup.
         return self.service.fetch_entity_geometry(self.entity_cls, identifier)
 
 

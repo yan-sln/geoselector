@@ -61,13 +61,13 @@
       },
       "geometry": {
         "PROPERTYNAME": "geom",
-        "CQL_FILTER": "code_insee='{value}'"
+        "CQL_FILTER": "code_arr='{value}'"
       }
     },
     "section": {
       "TYPENAME": "CADASTRALPARCELS.PARCELLAIRE_EXPRESS:feuille",
       "list_search": {
-        "PROPERTYNAME": "section",
+        "PROPERTYNAME": "code_insee,section",
         "CQL_FILTER": "code_insee='{code_insee}'"
       },
       "geometry": {
@@ -105,7 +105,7 @@
       },
       "geometry": {
         "PROPERTYNAME": "geom",
-        "CQL_FILTER": "idu_parcel='{idu_parcel}'"
+        "CQL_FILTER": "gid='{value}'"
       }
     }
   }

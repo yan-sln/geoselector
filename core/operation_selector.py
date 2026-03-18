@@ -22,9 +22,17 @@ class OperationSelector:
 
     @staticmethod
     def choose(args: Tuple[Any, ...], cfg: dict) -> str:
-        # 1️⃣ Dict argument – treat as filters for ``list_search`` or generic ``search``.
+        """Select the appropriate operation key from the entity configuration.
+
+        Supports custom operation names such as ``list_search_parcelle``. The
+        returned key must exist in ``cfg``.
+        """
+        # 1️⃣ Dict argument – treat as filters for a list‑search‑like operation.
         if args and isinstance(args[0], dict) and len(args) == 1:
-            return "list_search" if "list_search" in cfg else "search"
+            for key in cfg.keys():
+                if key.startswith("list_search"):
+                    return key
+            return "search" if "search" in cfg else next(iter(cfg))
 
         # 2️⃣ Single string – decide via heuristic (code vs name).
         if args and isinstance(args[0], str) and len(args) == 1:
@@ -35,12 +43,17 @@ class OperationSelector:
                 return "search_by_code"
             if "search_by_name" in cfg:
                 return "search_by_name"
-            # Fallback – generic ``search`` if defined, otherwise ``list_search``.
-            return "search" if "search" in cfg else "list_search"
+            if "search" in cfg:
+                return "search"
+            for key in cfg.keys():
+                if key.startswith("list_search"):
+                    return key
+            return next(iter(cfg))
 
-        # 3️⃣ Positional arguments – map to placeholders of ``list_search``.
-        if "list_search" in cfg:
-            return "list_search"
+        # 3️⃣ Positional arguments – map to a list‑search‑like operation.
+        for key in cfg.keys():
+            if key.startswith("list_search"):
+                return key
 
         # Default fallback – generic ``search`` if present.
-        return "search"
+        return "search" if "search" in cfg else next(iter(cfg))

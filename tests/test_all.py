@@ -162,22 +162,22 @@ if __name__ == "__main__":
     # Arrondissement
     arr_selector = SelectorFactory.create_selector(Arrondissement)
     arr_res = arr_selector.select('75056')
-    print('Arrondissement recherche :', arr_res)
-    arr_geom = arr_selector.get_geometry('75056')
+    print('Arrondissement recherche :', arr_res[:2])
+    arr_geom = arr_selector.get_geometry('119')
     print('Géométrie récupérée avec succès !' if arr_geom else 'Échec de la récupération de la géométrie.')
 
     # Section
     se_selector = SelectorFactory.create_selector(Section)
     se_res = se_selector.select('59521')
     print('Section recherche :', se_res[:2])
-    se_geom = se_selector.get_geometry('59521')
+    se_geom = se_selector.get_geometry('59521', 'ZC')
     print('Géométrie récupérée avec succès !' if se_geom else 'Échec de la récupération de la géométrie.')
 
     # Feuille
     fe_selector = SelectorFactory.create_selector(Feuille)
     fe_res = fe_selector.select('59521', 'ZC')
     print('Feuille recherche :', fe_res)
-    fe_geom = fe_selector.get_geometry('59521')
+    fe_geom = fe_selector.get_geometry('59521','ZC','1')
     print('Géométrie récupérée avec succès !' if fe_geom else 'Échec de la récupération de la géométrie.')
 
     # Parcelle
