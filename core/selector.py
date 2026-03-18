@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Selector implementation for GeoSelector.
 
 Provides :class:`SelectorImpl` – a thin wrapper around :class:`core.service.GeoService`
@@ -8,53 +9,159 @@ which caches service instances per base URL.
 from __future__ import annotations
 
 import logging
-from typing import List, Type, TypeVar, Dict
+import re
+from functools import lru_cache
+from typing import Dict, List, Type, TypeVar
 
 from .entities import GeoEntity
 from .service import GeoService
 from .api_client import ApiClient
+from .operation_selector import OperationSelector
+from .handler_registry import HandlerRegistry
 
 logger = logging.getLogger(__name__)
 
 T = TypeVar("T", bound=GeoEntity)
 
+# ----------------------------------------------------------------------
+# Helper utilities
+# ----------------------------------------------------------------------
+
+@lru_cache(maxsize=None)
+def _extract_placeholders(template: str) -> List[str]:
+    """Return all placeholder names found in a CQL template.
+
+    The placeholders are the identifiers wrapped in curly braces, e.g. ``{value}``.
+    """
+    return re.findall(r"{(\w+)}", template)
+
+
+def _build_filter(operation_cfg: dict, args: tuple) -> dict:
+    """Create a filter dictionary for a given operation configuration.
+
+    Supports three calling patterns used throughout the code base:
+
+    1. **Single dict argument** – the dict is returned unchanged.
+    2. **Single string argument** – the first placeholder is filled with the string,
+       remaining placeholders are set to an empty string.
+    3. **Positional arguments** – each argument is mapped to the corresponding
+       placeholder in order; missing arguments are filled with an empty string.
+    """
+    if not args:
+        raise ValueError("No arguments provided for filter construction")
+
+    # Case 1: dict supplied directly
+    if isinstance(args[0], dict) and len(args) == 1:
+        return args[0]
+
+    # Extract placeholders from the operation's CQL_FILTER
+    placeholders = _extract_placeholders(operation_cfg.get("CQL_FILTER", ""))
+    if not placeholders:
+        return {}
+
+    # Case 2: single string – fill first placeholder, rest empty
+    if isinstance(args[0], str) and len(args) == 1:
+        filters = {placeholders[0]: args[0]}
+        for ph in placeholders[1:]:
+            filters[ph] = ""
+        return filters
+
+    # Case 3: positional arguments – map in order
+    filters = {}
+    for i, ph in enumerate(placeholders):
+        filters[ph] = args[i] if i < len(args) else ""
+    return filters
+
 
 class SelectorImpl:
     """Concrete selector bound to a specific entity class.
 
-    Parameters
-    ----------
-    entity_cls:
-        The concrete :class:`GeoEntity` subclass this selector works with.
-    service:
-        An instance of :class:`GeoService` used to perform the actual queries.
+    This implementation relies on the new **OperationSelector** to choose the
+    appropriate operation and on **HandlerRegistry** to obtain the handler that
+    executes the request.
     """
 
     def __init__(self, entity_cls: Type[T], service: GeoService):
         self.entity_cls = entity_cls
         self.service = service
 
-    def select(self, text: str) -> List[GeoEntity]:
-        """Search for entities matching *text*.
+    def select(self, *args, **kwargs) -> List[GeoEntity]:
+        """Dispatch a search request using the ``HandlerRegistry``.
 
-        Delegates to :meth:`GeoService.search_entities`.
+        The method now relies on a unified filter builder and a data‑driven
+        ``OperationSelector``. Handlers are generated automatically from the JSON
+        configuration; missing handlers raise a clear ``NotImplementedError``.
         """
-        logger.debug("SelectorImpl.select called for %s with text %s", self.entity_cls.__name__, text)
-        return self.service.search_entities(self.entity_cls, text)
+        if not args:
+            raise ValueError("select() requires at least one argument")
 
-    def get_geometry(self, code: str) -> dict | None:
-        """Retrieve geometry for the entity identified by *code*.
+        # Resolve entity configuration.
+        entity_key = self.service._entity_key(self.entity_cls)
+        cfg = self.service.client.config.get("entities", {}).get(entity_key, {})
+
+        # Determine the operation using the selector.
+        operation = OperationSelector.choose(args, cfg)
+
+        # Retrieve the appropriate handler.
+        handler = HandlerRegistry.get(entity_key, operation)
+        if not handler:
+            raise NotImplementedError(
+                f"No handler for operation '{operation}' on entity '{entity_key}'"
+            )
+
+        # Build filters using the unified helper.
+        operation_cfg = cfg.get(operation, {})
+        filters = _build_filter(operation_cfg, args)
+        return handler(self, filters)
+
+    def get_geometry(self, identifier: str | dict) -> dict | None:
+        """Retrieve geometry for the entity.
+        
+        * ``identifier`` can be a simple string (the value for the sole placeholder
+        defined in the ``geometry`` block) **or** a dictionary providing explicit
+        parameters when the geometry CQL filter contains multiple placeholders
+        (e.g. {"feature_id": "12345"} for parcels).
         """
-        logger.debug("SelectorImpl.get_geometry called for %s with code %s", self.entity_cls.__name__, code)
-        return self.service.fetch_entity_geometry(self.entity_cls, code)
+        logger.debug(
+            "SelectorImpl.get_geometry called for %s with identifier %s",
+            self.entity_cls.__name__,
+            identifier,
+        )
+        # Inspect geometry configuration to see if a ``featureId`` placeholder is used.
+        entity_key = self.service._entity_key(self.entity_cls)
+        entity_cfg = self.service.client.config.get("entities", {}).get(entity_key, {})
+        geometry_cfg = entity_cfg.get("geometry", {})
+        placeholders = _extract_placeholders(geometry_cfg.get("CQL_FILTER", ""))
+
+        # If a dict is provided we forward it directly to the ApiClient.
+        if isinstance(identifier, dict):
+            return self.service.client.fetch_geometry(entity_key, **identifier)
+
+        # When ``featureId`` is required we first perform a ``list_search`` to
+        # obtain the identifier, then fetch the geometry.
+        if "featureId" in geometry_cfg:
+            if not placeholders:
+                return None
+            filter_dict = {placeholders[0]: identifier}
+            for ph in placeholders[1:]:
+                filter_dict[ph] = ""
+            raw_features = self.service.client.search(entity_key, "list_search", **filter_dict)
+            if raw_features:
+                feature_id = raw_features[0].get("id")
+                if feature_id:
+                    return self.service.client.fetch_geometry(entity_key, featureId=feature_id)
+            return None
+
+        # Fallback – delegate to the service's geometry helper.
+        return self.service.fetch_entity_geometry(self.entity_cls, identifier)
 
 
 class SelectorFactory:
-    """Factory that creates :class:`SelectorImpl` instances.
+    """Factory that creates :class:`SelectorImpl` instances and caches services.
 
-    It maintains a cache of :class:`GeoService` objects keyed by the ``base_url``
-    from the configuration, ensuring that multiple selectors for the same data
-    source share a single service (and thus a single :class:`ApiClient`).
+    The cache is keyed by the ``base_url`` of the underlying ``ApiClient`` so that
+    multiple selectors sharing the same WFS endpoint reuse a single ``GeoService``
+    (and consequently a single ``ApiClient``).
     """
 
     _services: Dict[str, GeoService] = {}
@@ -63,10 +170,10 @@ class SelectorFactory:
     def create_selector(cls, entity_cls: Type[T]) -> SelectorImpl:
         """Create a selector for *entity_cls*.
 
-        The function loads the default configuration file, re‑uses an existing
-        service for the same ``base_url`` or creates a new one.
+        The function loads the default configuration via :class:`ApiClient`,
+        re‑uses an existing service for the same ``base_url`` or creates a new one.
+        It also ensures that the search handler registry is initialised.
         """
-        # Load configuration via ApiClient (default path).
         client = ApiClient()
         base = client.base_url
         if base not in cls._services:
@@ -75,11 +182,15 @@ class SelectorFactory:
         else:
             logger.debug("Reusing existing GeoService for base URL %s", base)
         service = cls._services[base]
+        # Initialise the HandlerRegistry (idempotent).
+        try:
+            HandlerRegistry.init(service)
+        except Exception as e:
+            logger.error("Failed to initialise handler registry: %s", e)
         return SelectorImpl(entity_cls, service)
 
     @classmethod
     def reset(cls) -> None:
-        """Clear the internal service cache – useful for tests.
-        """
+        """Clear the internal service cache – useful for tests."""
         cls._services.clear()
         logger.debug("SelectorFactory cache cleared")

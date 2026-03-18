@@ -98,6 +98,10 @@ package core {
         +select(text: str) : list[GeoEntity]
         +get_geometry(code: str) : dict
     }
+    class HandlerRegistry {
+        +init(service: GeoService) : None
+        +get(entity_key: str, operation: str) : Callable
+    }
 
     ' ---------- Factory ----------
     class SelectorFactory {

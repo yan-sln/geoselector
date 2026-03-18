@@ -56,7 +56,7 @@ class GeoEntity(abc.ABC):
 # Concrete entity definitions -------------------------------------------------
 
 
-@dataclass(frozen=True)
+@dataclass
 class Region(GeoEntity):
     code: str
     name: Optional[str] = None
@@ -67,7 +67,7 @@ class Region(GeoEntity):
         return cls(code=props.get("code_insee"), name=props.get("nom_officiel"))
 
 
-@dataclass(frozen=True)
+@dataclass
 class Departement(GeoEntity):
     code: str
     name: Optional[str] = None
@@ -78,7 +78,7 @@ class Departement(GeoEntity):
         return cls(code=props.get("code_insee"), name=props.get("nom_officiel"))
 
 
-@dataclass(frozen=True)
+@dataclass
 class Commune(GeoEntity):
     code: str
     name: Optional[str] = None
@@ -89,7 +89,7 @@ class Commune(GeoEntity):
         return cls(code=props.get("code_insee"), name=props.get("nom_com"))
 
 
-@dataclass(frozen=True)
+@dataclass
 class Arrondissement(GeoEntity):
     code_insee: str
     name: Optional[str] = None
@@ -109,7 +109,7 @@ class Arrondissement(GeoEntity):
         )
 
 
-@dataclass(frozen=True)
+@dataclass
 class Feuille(GeoEntity):
     code_insee: str
     section: Optional[str] = None
@@ -128,8 +128,24 @@ class Feuille(GeoEntity):
             feuille=props.get("feuille"),
         )
 
+@dataclass
+class Section(GeoEntity):
+    code_insee: str
+    section: Optional[str] = None
 
-@dataclass(frozen=True)
+    @property
+    def code(self) -> str:  # type: ignore[override]
+        return self.code_insee
+
+    @classmethod
+    def from_api(cls, raw: Dict[str, Any]) -> "Section":
+        props = raw.get("properties", {})
+        return cls(
+            code_insee=props.get("code_insee"),
+            section=props.get("section"),
+        )
+
+@dataclass
 class Parcelle(GeoEntity):
     code_insee: str
     section: Optional[str] = None
@@ -151,7 +167,7 @@ class Parcelle(GeoEntity):
         )
 
 
-@dataclass(frozen=True)
+@dataclass
 class SubdivisionFiscale(GeoEntity):
     gid: Optional[str] = None
     idu_parcel: Optional[str] = None

@@ -12,7 +12,7 @@ geo_selector/
 ```
 
 * **`api`** : contient les implémentations concrètes des stratégies d’accès aux données géographiques (Gouv.fr et IGN).
-* **`core`** : cœur du système, avec les entités, les services, les sélecteurs, et le registre d’entités.
+* **`core`** : cœur du système, avec les entités, les services, les sélecteurs, et le **HandlerRegistry** qui fournit les handlers d’opérations.
 * **`factory`** : permet de créer facilement des selectors typés, avec une API et une stratégie donnée.
 
 ---
@@ -48,6 +48,8 @@ geo_selector/
 
   * `search_entities(entity_class, text)`
   * `fetch_entity_geometry(entity_class, code)`
+  * `list_entities(entity_class, **filters)` – effectue une recherche générique via le bloc ``search`` du JSON.
+  * `list_search(entity_class, **filters)` – utilise le bloc ``list_search`` du JSON lorsqu’il est disponible.
   * `get_entity_details(entity_class, code)`
 
 ### d) **Selectors (`selector.py`)**

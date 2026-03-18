@@ -55,7 +55,7 @@
     },
     "arrondissement": {
       "TYPENAME": "CADASTRALPARCELS.PARCELLAIRE_EXPRESS:arrondissement",
-      "search_by_code": {
+      "list_search": {
         "PROPERTYNAME": "code_insee,nom_arr,code_arr",
         "CQL_FILTER": "code_insee='{value}'"
       },
@@ -64,37 +64,42 @@
         "CQL_FILTER": "code_insee='{value}'"
       }
     },
+    "section": {
+      "TYPENAME": "CADASTRALPARCELS.PARCELLAIRE_EXPRESS:feuille",
+      "list_search": {
+        "PROPERTYNAME": "section",
+        "CQL_FILTER": "code_insee='{code_insee}'"
+      },
+      "geometry": {
+        "PROPERTYNAME": "geom",
+        "CQL_FILTER": "code_insee='{code_insee}' AND section='{section}'"
+      }
+    },
     "feuille": {
       "TYPENAME": "CADASTRALPARCELS.PARCELLAIRE_EXPRESS:feuille",
-      "search": {
+      "list_search": {
         "PROPERTYNAME": "code_insee,section,feuille",
         "CQL_FILTER": "code_insee='{code_insee}' AND section='{section}'"
       },
       "geometry": {
         "PROPERTYNAME": "geom",
         "CQL_FILTER": "code_insee='{code_insee}' AND section='{section}' AND feuille='{feuille}'"
-      },
-      "list_sections": {
-        "PROPERTYNAME": "section",
-        "CQL_FILTER": "code_insee='{code_insee}'",
-        "DISTINCT": "property:section"
       }
     },
     "parcelle": {
       "TYPENAME": "CADASTRALPARCELS.PARCELLAIRE_EXPRESS:parcelle",
-      "search": {
+      "list_search": {
         "PROPERTYNAME": "code_insee,section,numero,idu",
         "CQL_FILTER": "code_insee='{code_insee}' AND section='{section}'"
       },
       "geometry": {
         "PROPERTYNAME": "geom",
-        "featureId": "{feature_id}",
-        "CQL_FILTER": null
+        "featureId": "{feature_id}"
       }
     },
     "subdivision_fiscale": {
       "TYPENAME": "CADASTRALPARCELS.PARCELLAIRE_EXPRESS:subdivision_fiscale",
-      "search": {
+      "list_search": {
         "PROPERTYNAME": "gid,idu_parcel,lettre",
         "CQL_FILTER": "idu_parcel='{idu_parcel}'"
       },
