@@ -170,14 +170,13 @@ class Parcelle(GeoEntity):
 
 @dataclass
 class SubdivisionFiscale(GeoEntity):
-    gid: Optional[str] = None
+    gid: str
     idu_parcel: Optional[str] = None
     lettre: Optional[str] = None
 
     @property
     def code(self) -> str:  # type: ignore[override]
-        # Use ``idu_parcel`` as the primary identifier when available.
-        return self.idu_parcel or ""
+        return self.gid
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "SubdivisionFiscale":
