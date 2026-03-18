@@ -35,10 +35,13 @@ class GeoEntity(abc.ABC):
     def get_geometry(self, force: bool = False) -> Optional[Dict[str, Any]]:
         """Return the geometry dictionary.
 
-        If ``force`` is ``True`` and the geometry has not been loaded yet, the
-        method will ask the associated service to fetch it.
+        If ``force`` is ``True`` the geometry is fetched anew, overwriting any
+        cached value. If ``force`` is ``False`` and the geometry is not yet cached,
+        it is fetched and stored for future calls.
         """
-        if self._geometry is None and force and self._service is not None:
+        if self._service is None:
+            return self._geometry
+        if force or self._geometry is None:
             self._geometry = self._service.fetch_entity_geometry(type(self), self.code)
         return self._geometry
 
