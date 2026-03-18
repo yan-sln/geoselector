@@ -163,7 +163,7 @@ class Parcelle(GeoEntity):
     def from_api(cls, raw: Dict[str, Any]) -> "Parcelle":
         props = raw.get("properties", {})
         return cls(
-            feature_id=props.get("feature_id"),
+            feature_id=raw.get("id") or props.get("feature_id"),
             code_insee=props.get("code_insee"),
             section=props.get("section"),
             numero=props.get("numero"),

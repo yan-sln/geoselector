@@ -94,7 +94,7 @@
       },
       "geometry": {
         "PROPERTYNAME": "geom",
-        "featureId": "{feature_id}"
+        "featureId": "{featureId}"
       }
     },
     "subdivision_fiscale": {

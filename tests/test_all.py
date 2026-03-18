@@ -135,7 +135,7 @@ if __name__ == "__main__":
         Parcelle,
         SubdivisionFiscale,
     )
-    """
+    
     # Region: search by name and by code, then geometry
     region_selector = SelectorFactory.create_selector(Region)
     region_by_name = region_selector.select('Bretagne')
@@ -179,14 +179,14 @@ if __name__ == "__main__":
     print('Feuille recherche :', fe_res)
     fe_geom = fe_selector.get_geometry('59521','ZC','1')
     print('Géométrie récupérée avec succès !' if fe_geom else 'Échec de la récupération de la géométrie.')
-
+    
     # Parcelle
     parc_selector = SelectorFactory.create_selector(Parcelle)
     parc_res = parc_selector.select('59521', 'ZC')
     print('Parcelles listées :', parc_res[:2])
-    parc_geom = parc_selector.get_geometry('parcelle.43803455')
+    parc_geom = parc_selector.get_geometry('parcelle.638396')
     print('Géométrie récupérée avec succès !' if parc_geom else 'Échec de la récupération de la géométrie.')
-    """
+
     # Subdivision Fiscale
     sub_selector = SelectorFactory.create_selector(SubdivisionFiscale)
     sub_res = sub_selector.select('59521000ZC0063')

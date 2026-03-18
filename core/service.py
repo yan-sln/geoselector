@@ -161,15 +161,51 @@ class GeoService:
     # ---------------------------------------------------------------------
     # Geometry helpers
     # ---------------------------------------------------------------------
-    def fetch_entity_geometry(self, entity_cls: Type[GeoEntity], code: str) -> dict | None:
-        """Fetch geometry for a given *entity_cls* identified by *code*.
+    def fetch_entity_geometry(self, entity_cls: Type[GeoEntity], *args, **kwargs) -> dict | None:
+        """Fetch geometry for a given *entity_cls*.
+
+        This implementation builds the request parameters dynamically based on the
+        placeholders defined in the entity's ``geometry`` configuration. It supports
+        three calling styles:
+
+        1. A single dict argument – passed directly to the client.
+        2. Keyword arguments – used as‑is (the caller provides the correct names).
+        3. Positional arguments – mapped to the placeholders in the order they
+           appear in the ``CQL_FILTER``.
         """
-        # Convert CamelCase class name to snake_case to match config keys
+        # 1️⃣ Convert class name to configuration key
         import re
         entity_key = re.sub(r'(?<!^)(?=[A-Z])', '_', entity_cls.__name__).lower()
+
+        # 2️⃣ Retrieve geometry configuration for the entity
+        entity_cfg = self.client.config.get("entities", {}).get(entity_key, {})
+        geometry_cfg = entity_cfg.get("geometry", {})
+        cql_filter = geometry_cfg.get("CQL_FILTER", "")
+
+        # 3️⃣ Extract placeholders from CQL_FILTER (e.g., ['code_insee', 'section'])
+        placeholders = re.findall(r"{(\w+)}", cql_filter)
+
+        # Some entities (e.g., parcelle) define a dedicated ``featureId`` entry
+        # instead of a CQL_FILTER. If such a key exists, treat ``featureId`` as a
+        # placeholder.
+        if "featureId" in geometry_cfg:
+            placeholders.append("featureId")
+
+        # 4️⃣ Build the filter dictionary
+        if args and isinstance(args[0], dict) and len(args) == 1:
+            filters = args[0]
+        elif kwargs:
+            filters = kwargs
+        else:
+            # Map positional arguments to placeholders in order
+            filters = {}
+            for i, ph in enumerate(placeholders):
+                filters[ph] = args[i] if i < len(args) else ""
+
+        # 5️⃣ Perform the request
         try:
-            geometry = self.client.fetch_geometry(entity_key, value=code)
+            geometry = self.client.fetch_geometry(entity_key, **filters)
             return geometry
         except Exception:
-            # If geometry fetching fails (e.g., missing parameters), return None silently
+            # Return None on any failure (e.g., missing parameters, network error)
             return None
