@@ -97,7 +97,7 @@ class Arrondissement(GeoEntity):
 
     @property
     def code(self) -> str:  # type: ignore[override]
-        return self.code_insee
+        return f"{self.code_insee}_{self.code_arr}"
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "Arrondissement":
@@ -108,6 +108,22 @@ class Arrondissement(GeoEntity):
             code_arr=props.get("code_arr"),
         )
 
+@dataclass
+class Section(GeoEntity):
+    code_insee: str
+    section: Optional[str] = None
+
+    @property
+    def code(self) -> str:  # type: ignore[override]
+        return f"{self.code_insee}_{self.section}"
+
+    @classmethod
+    def from_api(cls, raw: Dict[str, Any]) -> "Section":
+        props = raw.get("properties", {})
+        return cls(
+            code_insee=props.get("code_insee"),
+            section=props.get("section"),
+        )
 
 @dataclass
 class Feuille(GeoEntity):
@@ -117,7 +133,7 @@ class Feuille(GeoEntity):
 
     @property
     def code(self) -> str:  # type: ignore[override]
-        return self.code_insee
+        return f"{self.code_insee}_{self.section}_{self.feuille}"
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "Feuille":
@@ -129,37 +145,22 @@ class Feuille(GeoEntity):
         )
 
 @dataclass
-class Section(GeoEntity):
-    code_insee: str
-    section: Optional[str] = None
-
-    @property
-    def code(self) -> str:  # type: ignore[override]
-        return self.code_insee
-
-    @classmethod
-    def from_api(cls, raw: Dict[str, Any]) -> "Section":
-        props = raw.get("properties", {})
-        return cls(
-            code_insee=props.get("code_insee"),
-            section=props.get("section"),
-        )
-
-@dataclass
 class Parcelle(GeoEntity):
-    code_insee: str
+    feature_id: str
+    code_insee: Optional[str] = None
     section: Optional[str] = None
     numero: Optional[str] = None
     idu: Optional[str] = None
 
     @property
     def code(self) -> str:  # type: ignore[override]
-        return self.code_insee
+        return self.feature_id
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "Parcelle":
         props = raw.get("properties", {})
         return cls(
+            feature_id=props.get("feature_id"),
             code_insee=props.get("code_insee"),
             section=props.get("section"),
             numero=props.get("numero"),
