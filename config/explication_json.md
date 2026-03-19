@@ -1,13 +1,13 @@
-# Explication du fichier `apis.json`
+# Explanation of the `apis.json` file
 
-Le fichier **[`config/apis.json`](config/apis.json:1)** décrit la configuration des appels aux services WFS (Web Feature Service) utilisés par le projet *geoselector*. Il regroupe :
+The **[`config/apis.json`](config/apis.json:1)** defines the configuration for calls to the WFS (Web Feature Service) used by the *geoselector* project. It contains:
 
-1. **`base_url`** – URL de base du service.
-2. **`api_type`** – Type d'API (ici `wfs`).
-3. **`common`** – Paramètres communs à toutes les requêtes (service, version, type de requête, format de sortie).
-4. **`entities`** – Un dictionnaire où chaque clé représente une entité géographique (region, departement, commune, …) et la valeur décrit comment interroger cette entité.
+1. **`base_url`** – Base URL of the service.
+2. **`api_type`** – Type of API (here `wfs`).
+3. **`common`** – Parameters common to all requests (service, version, request type, output format).
+4. **`entities`** – A dictionary where each key represents a geographic entity (region, department, commune, …) and the value describes how to query that entity.
 
-## Structure générale
+## General Structure
 ```json
 {
   "base_url": "https://data.geopf.fr/wfs/ows",
@@ -18,7 +18,7 @@ Le fichier **[`config/apis.json`](config/apis.json:1)** décrit la configuration
 ```
 
 ### `common`
-Contient les paramètres qui seront **fusionnés** avec les paramètres spécifiques de chaque entité :
+Contains parameters that will be **merged** with the specific parameters of each entity:
 ```json
 "common": {
   "SERVICE": "WFS",
@@ -29,63 +29,63 @@ Contient les paramètres qui seront **fusionnés** avec les paramètres spécifi
 ```
 
 ## `entities`
-Chaque entité possède :
-* **`TYPENAME`** – Nom complet de la couche WFS.
-* Un ou plusieurs blocs d'opération :
-  * `search_by_name` – Recherche à partir du nom.
-  * `search_by_code` – Recherche à partir du code INSEE.
-  * `list_search` – Recherche d'une liste d'objets enfants (ex. arrondissements d'une commune).
-  * `geometry` – Récupération de la géométrie du feature.
+Each entity includes:
+- **`TYPENAME`** – Full name of the WFS layer.
+- One or more operation blocks:
+  - `search_by_name` – Search by name.
+  - `search_by_code` – Search by INSEE code.
+  - `list_search` – List child objects (e.g., districts of a municipality).
+  - `geometry` – Retrieve the geometry of a feature.
 
-### Important : toutes les opérations ne sont pas disponibles pour toutes les entités
-- **`region`, `departement`, `commune`** : disposent de `search_by_name`, `search_by_code` **et** `geometry`.
-- **`arrondissement`, `section`, `feuille`, `parcelle`, `subdivision_fiscale`** : n'ont **pas** `search_by_name`/`search_by_code`. Elles offrent **`list_search`** (pour obtenir la liste des sous‑objets) et `geometry`.
+### Important: not all operations are available for every entity
+- **`region`, `department`, `commune`** – have `search_by_name`, `search_by_code` **and** `geometry`.
+- **`arrondissement`, `section`, `feuille`, `parcelle`, `subdivision_fiscale`** – do **not** have `search_by_name`/`search_by_code`. They provide **`list_search`** (to obtain a list of sub‑objects) and `geometry`.
 
-En d’autres termes, chaque entité possède **soit** les deux blocs de recherche (`search_by_name` + `search_by_code`) **soit** le bloc `list_search`. Le bloc `geometry` est présent pour toutes les entités afin de récupérer la forme géographique.
+In other words, each entity either has the two search blocks (`search_by_name` + `search_by_code`) **or** the `list_search` block. The `geometry` block is present for all entities to fetch the geographic shape.
 
-## Exemple de blocs
-### Recherche par nom – `region`
+## Example blocks
+### Name search – `region`
 ```json
 "search_by_name": {
   "PROPERTYNAME": "nom_officiel,code_insee",
   "CQL_FILTER": "nom_officiel='{value}'"
 }
 ```
-* `PROPERTYNAME` indique les attributs à retourner.
-* `CQL_FILTER` utilise le placeholder `{value}` qui sera remplacé par le nom fourni par l’appelant.
+- `PROPERTYNAME` indicates the attributes to return.
+- `CQL_FILTER` uses the placeholder `{value}` which will be replaced by the name provided by the caller.
 
-### Recherche de liste – `arrondissement`
+### List search – `arrondissement`
 ```json
 "list_search": {
   "PROPERTYNAME": "code_insee,nom_arr,code_arr",
   "CQL_FILTER": "code_insee='{value}'"
 }
 ```
-Ici, `{value}` correspond au code INSEE de la commune parent.
+Here, `{value}` corresponds to the INSEE code of the parent municipality.
 
-### Géométrie – `parcelle`
+### Geometry – `parcelle`
 ```json
 "geometry": {
   "PROPERTYNAME": "geom",
   "featureId": "{feature_id}"
 }
 ```
-Pour les parcelles, la géométrie est obtenue via le `featureId` plutôt que par un filtre CQL.
+For parcels, geometry is obtained via the `featureId` rather than a CQL filter.
 
 ## Place‑holders
-Les chaînes entre accolades (`{placeholder}`) sont remplacées dynamiquement par le code Python :
-* `{value}` – valeur générique (nom ou code).
-* `{code_insee}` – code INSEE de l’entité.
-* `{section}`, `{feuille}`, `{feature_id}`, `{idu_parcel}` – identifiants spécifiques aux objets cadastraux.
+Strings wrapped in curly braces (`{placeholder}`) are dynamically replaced by the Python code:
+- `{value}` – generic value (name or code).
+- `{code_insee}` – INSEE code of the entity.
+- `{section}`, `{feuille}`, `{feature_id}`, `{idu_parcel}` – specific identifiers for cadastral objects.
 
-Ces placeholders permettent de réutiliser la même définition JSON pour de nombreuses requêtes sans coder en dur les valeurs.
+These placeholders allow reusing the same JSON definition for many queries without hard‑coding values.
 
-## Utilisation dans le code
-1. **Chargement** : `core/config.py` lit `config/apis.json`.
-2. **Sélection** : le service (`core/service.py`) choisit l’entité et l’opération souhaitées.
-3. **Construction** : `core/request_builder.py` combine `common`, le bloc d’opération et `base_url`, puis remplace les placeholders.
-4. **Envoi** : `core/api_client.py` effectue la requête HTTP vers le WFS.
+## Usage in the code
+1. **Loading** – `core/config.py` reads `config/apis.json`.
+2. **Selection** – the service (`core/service.py`) chooses the entity and operation.
+3. **Construction** – `core/request_builder.py` combines the `common` section, the operation block, and `base_url`, then replaces placeholders.
+4. **Sending** – `core/api_client.py` performs the HTTP request to the WFS.
 
 ---
 
-Ce fichier `explication_json.md` résume donc la structure du JSON, les différences d’opérations entre les entités, et le mécanisme d’interpolation utilisé par le projet.
+This file summarizes the JSON structure, the differences in operations between entities, and the interpolation mechanism used by the project.

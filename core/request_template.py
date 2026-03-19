@@ -9,7 +9,7 @@ implement the same protocol.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Protocol, Mapping
+from typing import Any, Mapping, Protocol
 
 
 class RequestTemplate(Protocol):

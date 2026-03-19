@@ -10,12 +10,15 @@ from __future__ import annotations
 from typing import Callable, Dict, Tuple, List, Any
 
 from .service import GeoService
-# Importing SelectorImpl would cause a circular import because ``selector`` imports ``HandlerRegistry``.
-# Handlers only need an object with ``entity_cls`` and ``service`` attributes, so we use ``Any`` for the type.
+
+# Importing SelectorImpl would cause a circular import because
+# ``selector`` imports ``HandlerRegistry``.
+# Handlers only need an object with ``entity_cls`` and ``service`` attributes,
+# so we use ``Any`` for the type.
 
 
 class HandlerRegistry:
-    _registry: Dict[Tuple[str, str], Callable[[Any, dict], List]] = {}
+    _registry: Dict[Tuple[str, str], Callable[[Any, Dict[str, Any]], List[Any]]] = {}
 
     @classmethod
     def init(cls, service: GeoService) -> None:
@@ -28,17 +31,18 @@ class HandlerRegistry:
         entities_cfg = service.client.config.get("entities", {})
         for entity_key, cfg in entities_cfg.items():
             for op_name in cfg.keys():
-                cls._registry[(entity_key, op_name)] = cls._build_handler(op_name, service)
+                cls._registry[(entity_key, op_name)] = cls._build_handler(
+                    op_name, service
+                )
 
     @staticmethod
-    def _build_handler(operation: str, service: GeoService):
-        """Create a handler that returns instantiated entity objects.
+    def _build_handler(
+        operation: str,
+        service: GeoService,
+    ) -> Callable[[Any, Dict[str, Any]], List[Any]]:
+        """Create a handler that returns instantiated entity objects."""
 
-        The handler performs a low‑level ``client.search`` using the exact
-        operation name from the configuration, then converts the raw feature
-        dictionaries into entity instances via ``service._instantiate``.
-        """
-        def handler(selector, filters):
+        def handler(selector: Any, filters: Dict[str, Any]) -> List[Any]:
             entity_key = selector.service._entity_key(selector.entity_cls)
             raw = service.client.search(entity_key, operation, **filters)
             return service._instantiate(selector.entity_cls, raw)
@@ -46,5 +50,9 @@ class HandlerRegistry:
         return handler
 
     @classmethod
-    def get(cls, entity_key: str, operation: str):
+    def get(
+        cls,
+        entity_key: str,
+        operation: str,
+    ) -> Callable[[Any, Dict[str, Any]], List[Any]] | None:
         return cls._registry.get((entity_key, operation))

@@ -124,6 +124,8 @@ This document enumerates everything that needs to be implemented for the **GeoSe
 ---
 
 ### Final Note for the Implementer
+
 Follow the order above: start with the **core components** (template, client, entities, service, selector, factory), then **configuration validation**, **logging/error handling**, **caching**, **tests**, **documentation**, and finally **CI/packaging**.  Each step builds on the previous one, ensuring a solid foundation before moving to higher‑level concerns.
 
 Feel free to adjust naming conventions (e.g., `RequestTemplate` → `WfsRequestTemplate`) as long as the responsibilities remain clearly separated.
+

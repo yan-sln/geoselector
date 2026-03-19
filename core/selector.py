@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 import re
 from functools import lru_cache
-from typing import Dict, List, Type, TypeVar
+from typing import Any, Dict, List, Tuple, Type, TypeVar, Optional
 
 from .entities import GeoEntity
 from .service import GeoService
@@ -27,6 +27,7 @@ T = TypeVar("T", bound=GeoEntity)
 # Helper utilities
 # ----------------------------------------------------------------------
 
+
 @lru_cache(maxsize=None)
 def _extract_placeholders(template: str) -> List[str]:
     """Return all placeholder names found in a CQL template.
@@ -36,7 +37,10 @@ def _extract_placeholders(template: str) -> List[str]:
     return re.findall(r"{(\w+)}", template)
 
 
-def _build_filter(operation_cfg: dict, args: tuple) -> dict:
+def _build_filter(
+    operation_cfg: Dict[str, Any],
+    args: Tuple[Any, ...],
+) -> Dict[str, Any]:
     """Create a filter dictionary for a given operation configuration.
 
     Supports three calling patterns used throughout the code base:
@@ -85,7 +89,7 @@ class SelectorImpl:
         self.entity_cls = entity_cls
         self.service = service
 
-    def select(self, *args, **kwargs) -> List[GeoEntity]:
+    def select(self, *args: Any, **kwargs: Any) -> List[GeoEntity]:
         """Dispatch a search request using the ``HandlerRegistry``.
 
         The method now relies on a unified filter builder and a data‑driven
@@ -114,26 +118,28 @@ class SelectorImpl:
         filters = _build_filter(operation_cfg, args)
         return handler(self, filters)
 
-    def get_geometry(self, *args, **kwargs) -> dict | None:
+    def get_geometry(self, *args: Any, **kwargs: Any) -> Optional[Dict[str, Any]]:
         """Retrieve geometry for the entity.
 
-        * ``*args`` and ``**kwargs`` allow flexible identification of the geometry.
-        * If the first positional argument is a ``dict`` it is forwarded directly to the client.
+        * ``*args`` and ``**kwargs`` allow flexible geometry identification.
+        * If the first arg is a ``dict`` it is forwarded to the client.
         * A single string argument follows the original behavior.
-        * Multiple positional arguments are mapped to placeholders via ``_build_filter``.
+        * Multiple args map to placeholders via ``_build_filter``.
         """
         logger.debug(
-            "SelectorImpl.get_geometry called for %s with args=%s kwargs=%s",
+            "SelectorImpl.get_geometry called for %s "
+            "with args=%s kwargs=%s",
             self.entity_cls.__name__,
             args,
             kwargs,
         )
         # Resolve entity and geometry configuration.
         entity_key = self.service._entity_key(self.entity_cls)
-        entity_cfg = self.service.client.config.get("entities", {}).get(entity_key, {})
-        geometry_cfg = entity_cfg.get("geometry", {})
-        placeholders = _extract_placeholders(geometry_cfg.get("CQL_FILTER", ""))
-
+        entity_cfg: Dict[str, Any] = (
+            self.service.client.config.get("entities", {})
+            .get(entity_key, {})
+        )
+        geometry_cfg: Dict[str, Any] = entity_cfg.get("geometry", {})
         # If a dict is passed as the first positional argument, forward it.
         if args and isinstance(args[0], dict):
             return self.service.client.fetch_geometry(entity_key, **args[0])
@@ -149,7 +155,11 @@ class SelectorImpl:
         identifier = args[0]
 
         # If the identifier looks like a featureId, use it.
-        if "featureId" in geometry_cfg and isinstance(identifier, str) and "." in identifier:
+        if (
+            "featureId" in geometry_cfg
+            and isinstance(identifier, str)
+            and "." in identifier
+        ):
             return self.service.client.fetch_geometry(entity_key, featureId=identifier)
 
         # No featureId required – if multiple args, build filters and fetch.
@@ -157,7 +167,7 @@ class SelectorImpl:
             filters = _build_filter(geometry_cfg, args)
             return self.service.client.fetch_geometry(entity_key, **filters)
 
-        # 5️⃣ Fallback to service helper for simple code lookup.
+        # Fallback to service helper for simple code lookup.
         return self.service.fetch_entity_geometry(self.entity_cls, identifier)
 
 

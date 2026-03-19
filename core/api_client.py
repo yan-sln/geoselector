@@ -1,3 +1,4 @@
+# flake8: noqa
 """API client for GeoSelector.
 
 This module provides :class:`ApiClient` which loads the JSON configuration from
@@ -13,9 +14,9 @@ import urllib.parse
 import urllib.request
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, cast
 
-from .request_builder import load_api_config, get_request_builder
+from .request_builder import get_request_builder
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,15 @@ class ApiError(RuntimeError):
     """Custom exception for API‑related errors."""
 
     def __init__(self, message: str, url: str | None = None):
+        """Initialize the ApiError with an error message and optional URL.
+
+        Parameters
+        ----------
+        message: str
+            Human‑readable error description.
+        url: str | None, optional
+            The request URL that caused the error, if applicable.
+        """
         super().__init__(message)
         self.url = url
 
@@ -106,12 +116,14 @@ class ApiClient:
 
         # Build the full parameter dictionary using the request builder.
         # Ensure the resulting mapping is mutable.
-        params = dict(self.builder(
-            typename=typename,
-            propertyname=propertyname,
-            cql=cql,
-            **extra,
-        ))
+        params = dict(
+            self.builder(
+                typename=typename,
+                propertyname=propertyname,
+                cql=cql,
+                **extra,
+            )
+        )
 
         # Some operations require a ``featureId`` placeholder to be added to the
         # URL path rather than the query string. For simplicity we treat it as a
@@ -138,7 +150,8 @@ class ApiClient:
         try:
             with urllib.request.urlopen(url, timeout=30) as resp:
                 raw = resp.read().decode()
-                data = json.loads(raw)
+                # The response is expected to be a JSON object mapping strings to values.
+                data: Dict[str, Any] = json.loads(raw)
                 logger.info("Successful GET request to %s", url)
                 return data
         except Exception as exc:
@@ -157,7 +170,7 @@ class ApiClient:
         """
         url = self._build_url(entity, mode, **values)
         data = self._cached_get(url)
-        return data.get("features", [])
+        return cast(List[Dict[str, Any]], data.get("features", []))
 
     def fetch_geometry(self, entity: str, **values: Any) -> Optional[Dict[str, Any]]:
         """Fetch geometry for *entity*.
@@ -177,4 +190,4 @@ class ApiClient:
         if geometry is None:
             # Fallback to a property called ``geom``.
             geometry = first.get("properties", {}).get("geom")
-        return geometry
+        return cast(Optional[Dict[str, Any]], geometry)

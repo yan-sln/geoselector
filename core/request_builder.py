@@ -14,10 +14,10 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Callable, Mapping, Any
+from typing import Callable, Mapping, Any, Dict
 
 
-def load_api_config(path: str = "config/apis.json") -> dict:
+def load_api_config(path: str = "config/apis.json") -> Dict[str, Any]:
     """Load the JSON configuration file.
 
     Returns the parsed dictionary.  Raises ``FileNotFoundError`` if the file
@@ -27,15 +27,16 @@ def load_api_config(path: str = "config/apis.json") -> dict:
     if not config_path.is_file():
         raise FileNotFoundError(f"API configuration not found: {config_path}")
     with config_path.open(encoding="utf-8") as f:
-        return json.load(f)
+        return json.load(f)  # type: ignore
 
 
-def wfs_builder(common: dict) -> Callable[..., Mapping[str, Any]]:
+def wfs_builder(common: Dict[str, Any]) -> Callable[..., Mapping[str, Any]]:
     """Return a builder function for the WFS API.
 
     The returned ``build`` function matches the signature used by the original
     ``RequestTemplate`` dataclass.
     """
+
     def build(
         typename: str,
         propertyname: str,
@@ -58,13 +59,14 @@ def wfs_builder(common: dict) -> Callable[..., Mapping[str, Any]]:
     return build
 
 
-def rest_builder(common: dict) -> Callable[..., Mapping[str, Any]]:
+def rest_builder(common: Dict[str, Any]) -> Callable[..., Mapping[str, Any]]:
     """Placeholder for a future REST API builder.
 
     This example simply returns the ``extra`` mapping unchanged; real
     implementations would translate the arguments into the appropriate query
     parameters or request body.
     """
+
     def build(endpoint: str, **extra: Any) -> Mapping[str, Any]:
         # Example: include a base endpoint and any extra query parameters.
         params: dict[str, Any] = {"endpoint": endpoint}
@@ -74,7 +76,7 @@ def rest_builder(common: dict) -> Callable[..., Mapping[str, Any]]:
     return build
 
 
-def get_request_builder(config: dict) -> Callable:
+def get_request_builder(config: Dict[str, Any]) -> Callable[..., Mapping[str, Any]]:
     """Select the appropriate request builder based on ``api_type``.
 
     ``api_type`` defaults to ``"wfs"`` for backward compatibility.

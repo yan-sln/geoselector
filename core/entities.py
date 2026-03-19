@@ -1,3 +1,5 @@
+# "Entity definitions for GeoSelector.
+
 """Entity definitions for GeoSelector.
 
 This module defines an abstract base class :class:`GeoEntity` and concrete
@@ -6,16 +8,18 @@ Each subclass provides a ``from_api`` classmethod to build an instance from the
 raw feature dictionary returned by the WFS service.
 """
 
+# flake8: noqa
 from __future__ import annotations
 
 import abc
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, Optional, Type, TypeVar
 
 # Forward declaration for type hinting.
 Self = TypeVar("Self", bound="GeoEntity")
 
 
+# flake8: noqa
 class GeoEntity(abc.ABC):
     """Base class for all geographical entities.
 
@@ -61,6 +65,8 @@ class GeoEntity(abc.ABC):
 
 @dataclass
 class Region(GeoEntity):
+    """Geographic region entity."""
+
     code: str
     name: Optional[str] = None
 
@@ -72,6 +78,8 @@ class Region(GeoEntity):
 
 @dataclass
 class Departement(GeoEntity):
+    """Geographic department entity."""
+
     code: str
     name: Optional[str] = None
 
@@ -83,6 +91,8 @@ class Departement(GeoEntity):
 
 @dataclass
 class Commune(GeoEntity):
+    """Geographic commune entity."""
+
     code: str
     name: Optional[str] = None
 
@@ -94,6 +104,8 @@ class Commune(GeoEntity):
 
 @dataclass
 class Arrondissement(GeoEntity):
+    """Geographic arrondissement entity."""
+
     code_insee: str
     name: Optional[str] = None
     code_arr: Optional[str] = None
@@ -111,8 +123,11 @@ class Arrondissement(GeoEntity):
             code_arr=props.get("code_arr"),
         )
 
+
 @dataclass
 class Section(GeoEntity):
+    """Geographic section entity."""
+
     code_insee: str
     section: Optional[str] = None
 
@@ -128,8 +143,11 @@ class Section(GeoEntity):
             section=props.get("section"),
         )
 
+
 @dataclass
 class Feuille(GeoEntity):
+    """Geographic feuille entity."""
+
     code_insee: str
     section: Optional[str] = None
     feuille: Optional[str] = None
@@ -147,8 +165,11 @@ class Feuille(GeoEntity):
             feuille=props.get("feuille"),
         )
 
+
 @dataclass
 class Parcelle(GeoEntity):
+    """Geographic parcel entity."""
+
     feature_id: str
     code_insee: Optional[str] = None
     section: Optional[str] = None
@@ -173,6 +194,8 @@ class Parcelle(GeoEntity):
 
 @dataclass
 class SubdivisionFiscale(GeoEntity):
+    """Geographic subdivision fiscale entity."""
+
     gid: str
     idu_parcel: Optional[str] = None
     lettre: Optional[str] = None

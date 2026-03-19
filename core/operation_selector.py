@@ -21,24 +21,28 @@ class OperationSelector:
     """
 
     @staticmethod
-    def choose(args: Tuple[Any, ...], cfg: dict) -> str:
+    def choose(args: Tuple[Any, ...], cfg: dict[str, Any]) -> str:
         """Select the appropriate operation key from the entity configuration.
 
         Supports custom operation names such as ``list_search_parcelle``. The
         returned key must exist in ``cfg``.
         """
-        # 1️⃣ Dict argument – treat as filters for a list‑search‑like operation.
+        # 1⃣ Dict argument – treat as filters for a list‑search‑like operation.
         if args and isinstance(args[0], dict) and len(args) == 1:
             for key in cfg.keys():
                 if key.startswith("list_search"):
                     return key
             return "search" if "search" in cfg else next(iter(cfg))
 
-        # 2️⃣ Single string – decide via heuristic (code vs name).
+        # 2⃣ Single string – decide via heuristic (code vs name).
         if args and isinstance(args[0], str) and len(args) == 1:
             text = args[0]
             if "search_by_name" in cfg and "search_by_code" in cfg:
-                return "search_by_code" if text.isdigit() or len(text) <= 3 else "search_by_name"
+                return (
+                    "search_by_code"
+                    if text.isdigit() or len(text) <= 3
+                    else "search_by_name"
+                )
             if "search_by_code" in cfg:
                 return "search_by_code"
             if "search_by_name" in cfg:
@@ -50,7 +54,7 @@ class OperationSelector:
                     return key
             return next(iter(cfg))
 
-        # 3️⃣ Positional arguments – map to a list‑search‑like operation.
+        # 3⃣ Positional arguments – map to a list‑search‑like operation.
         for key in cfg.keys():
             if key.startswith("list_search"):
                 return key

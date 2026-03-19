@@ -1,147 +1,139 @@
 # GeoSelector
 
-## 1. **Architecture générale**
+## 1. General Architecture
 
-Le dépôt est organisé en trois grands modules principaux :
+The repository is organized into three main modules:
 
 ```
 geo_selector/
-├── api/          # Adaptateurs pour différentes APIs géographiques
-├── core/         # Logique centrale et entités
-└── factory/      # Factories pour créer des sélecteurs d'entités
+  api/          # Adapters for various geographic APIs
+  core/         # Core logic and entities
+  factory/      # Factories to create entity selectors
 ```
 
-* **`api`** : contient les implémentations concrètes des stratégies d’accès aux données géographiques (Gouv.fr et IGN).
-* **`core`** : cœur du système, avec les entités, les services, les sélecteurs, et le **HandlerRegistry** qui fournit les handlers d’opérations.
-* **`factory`** : permet de créer facilement des selectors typés, avec une API et une stratégie donnée.
+* **`api`**: contains concrete implementations of strategies to access geographic data (Gouv.fr and IGN).
+* **`core`**: the heart of the system, with entities, services, selectors, and the **HandlerRegistry** that provides operation handlers.
+* **`factory`**: allows easy creation of typed selectors with a given API and strategy.
 
 ---
 
-## 2. **`core` : cœur fonctionnel**
+## 2. `core`: Functional Core
 
-### a) **Entities (`entities.py`)**
+### a) Entities (`entities.py`)
 
-* Définit la classe abstraite `GeoEntity` avec une interface `from_dict`.
-* Les sous-classes concrètes représentent des entités géographiques :
-
+* Defines the abstract class `GeoEntity` with a `from_dict` interface.
+* Concrete subclasses represent geographic entities:
   * `Municipality` → communes
-  * `Department` → départements
-  * `Region` → régions
-  * `Parcel` → parcelles cadastrales
-  * `Section` → sections cadastrales
-* Chaque entité déclare `API_ENDPOINT`, ce qui permet de l’enregistrer automatiquement dans `EntityRegistry`.
+  * `Department` → departments
+  * `Region` → regions
+  * `Parcel` → cadastral parcels
+  * `Section` → cadastral sections
+* Each entity declares `API_ENDPOINT`, enabling automatic registration in `EntityRegistry`.
 
-### b) **Registry (`registry.py`)**
+### b) Registry (`registry.py`)
 
-* `EntityRegistry` stocke les entités par leur `API_ENDPOINT`.
-* Méthodes :
+* `EntityRegistry` stores entities by their `API_ENDPOINT`.
+* Methods:
+  * `register` – add an entity
+  * `get` – retrieve an entity by its endpoint
+  * `list_entities` – list all registered entities
+* Facilitates dynamic linking between entities and API strategies.
 
-  * `register` → ajouter une entité
-  * `get` → récupérer une entité via son endpoint
-  * `list_entities` → lister toutes les entités enregistrées
-* Sert à relier dynamiquement les entités aux stratégies API.
+### c) Service (`service.py`)
 
-### c) **Service (`service.py`)**
-
-* `GeoService` : abstraction pour interroger n’importe quelle API via une `ApiStrategy`.
-* Méthodes :
-
+* `GeoService`: high‑level service to query any API via an `ApiStrategy`.
+* Methods:
   * `search_entities(entity_class, text)`
   * `fetch_entity_geometry(entity_class, code)`
-  * `list_entities(entity_class, **filters)` – effectue une recherche générique via le bloc ``search`` du JSON.
-  * `list_search(entity_class, **filters)` – utilise le bloc ``list_search`` du JSON lorsqu’il est disponible.
+  * `list_entities(entity_class, **filters)` – generic search using the ``search`` block in the JSON.
+  * `list_search(entity_class, **filters)` – uses the ``list_search`` block when available.
   * `get_entity_details(entity_class, code)`
 
-### d) **Selectors (`selector.py`)**
+### d) Selectors (`selector.py`)
 
-* `EntitySelector` : interface typée pour sélectionner des entités.
-* `EntitySelectorImpl` : implémentation générique qui utilise `GeoService` pour exécuter les recherches et récupérer géométrie/détails.
-* Permet un typage fort : par exemple un `EntitySelector<Municipality>` renvoie toujours des objets `Municipality`.
+* `EntitySelector`: typed interface for selecting entities.
+* `EntitySelectorImpl`: generic implementation that uses `GeoService` for searches and geometry retrieval.
+* Provides strong typing, e.g., an `EntitySelector<Municipality>` always returns `Municipality` objects.
 
-### e) **Strategy (`strategy.py`)**
+### e) Strategy (`strategy.py`)
 
-* Interface `ApiStrategy` pour standardiser les appels API.
-* Les méthodes abstraites sont :
-
+* Interface `ApiStrategy` standardizes API calls.
+* Abstract methods:
   * `search(endpoint, text)`
   * `fetch_geometry(endpoint, code)`
   * `fetch_details(endpoint, code)`
 
 ---
 
-## 3. **`api` : implémentation des stratégies**
+## 3. `api`: Strategy Implementations
 
-### a) **`gouvfr.py`**
+### a) `gouvfr.py`
 
-* Implémente `GouvFrApiStrategy` pour l’API `geo.api.gouv.fr`.
-* Méthodes complètes avec formatage spécifique pour chaque type d’entité.
-* Gestion des erreurs via `try/except` et logs simples (`print`).
-* Supporte :
+* Implements `GouvFrApiStrategy` for the `geo.api.gouv.fr` API.
+* Complete methods with specific formatting for each entity type.
+* Error handling via `try/except` and simple logging (`print`).
+* Supports:
+  * Communes, departments, regions
+  * Parcels and sections
 
-  * Communes, départements, régions
-  * Parcelles et sections cadastrales
+### b) `ign.py`
 
-### b) **`ign.py`**
-
-* Implémente `IGNApiStrategy`.
-* Actuellement minimaliste : toutes les méthodes font juste un `print` et renvoient des structures vides.
-* À compléter pour interroger l’API IGN réelle.
+* Implements `IGNApiStrategy`.
+* Currently minimal: methods only `print` and return empty structures.
+* Needs implementation to query the real IGN API.
 
 ---
 
-## 4. **`factory` : création des selectors**
+## 4. Factory: Creating Selectors
 
 ### `selector_factory.py`
 
-* `SelectorFactory` fournit une interface simple pour créer des sélecteurs typés :
+* `SelectorFactory` provides a simple interface to create typed selectors:
 
 ```python
 selector = SelectorFactory.create_selector(Municipality, "GOUVFRApiStrategy")
 ```
 
-* Fonctionnement :
-
-  1. Récupère la stratégie API dans `STRATEGIES`.
-  2. Instancie `GeoService` avec cette stratégie.
-  3. Retourne un `EntitySelectorImpl` typé avec la classe d’entité donnée.
-
----
-
-## 5. **Exposition publique (`__init__.py`)**
-
-* Le package `geo_selector` expose directement :
-
-  ```python
-  core_service       # alias GeoService
-  selector_factory   # alias SelectorFactory
-  ```
-* Les utilisateurs peuvent donc créer un service ou un selector facilement sans naviguer dans les sous-modules.
+* How it works:
+  1. Retrieves the API strategy from `STRATEGIES`.
+  2. Instantiates `GeoService` with that strategy.
+  3. Returns an `EntitySelectorImpl` typed with the given entity class.
 
 ---
 
-## 6. **Points forts**
+## 5. Public API (`__init__.py`)
 
-* Architecture claire en **couches** : API ↔ Service ↔ Selector ↔ Entité.
-* Typage fort grâce à `Generic[T]`.
-* Extensible : ajouter une nouvelle API ou entité se fait facilement via `ApiStrategy` et `GeoEntity`.
-* Factory simplifie la création de selectors.
+* The `geo_selector` package directly exposes:
+  * `core_service` – alias for `GeoService`
+  * `selector_factory` – alias for `SelectorFactory`
 
----
-
-## 7. **Points à améliorer**
-
-1. **IGNApiStrategy** : à implémenter correctement.
-2. **Logging et erreurs** : remplacer les `print` par un vrai `logger`.
-3. **Tests unitaires** : pas visibles ici, mais cruciaux pour valider les stratégies API et le mapping des entités.
-4. **Pagination / limites** : `GouvFrApiStrategy.search` limite actuellement à 10 résultats fixes.
-5. **Validation des données** : les champs optionnels (`commune_code`, `section`, `region_code`, etc.) sont maintenant validés de façon robuste grâce à la fonction `_ensure_fields` dans `core/entities.py`, qui lève des `ValueError` explicites en cas d’incohérence.
+* Users can easily create a service or selector without navigating sub‑modules.
 
 ---
 
-## 8. **Résumé fonctionnel**
+## 6. Strengths
 
-* Tu as un **framework de sélection d’entités géographiques**.
-* On peut faire :
+* Clear layered architecture: API ↔ Service ↔ Selector ↔ Entity.
+* Strong typing via `Generic[T]`.
+* Extensible: adding a new API or entity is straightforward through `ApiStrategy` and `GeoEntity`.
+* Factory simplifies selector creation.
+
+---
+
+## 7. Areas for Improvement
+
+1. **IGNApiStrategy**: needs proper implementation.
+2. **Logging and error handling**: replace `print` statements with a proper logger.
+3. **Unit tests**: currently missing; essential for validating API strategies and entity mapping.
+4. **Pagination / limits**: `GouvFrApiStrategy.search` currently limits results to a fixed 10.
+5. **Data validation**: optional fields (`commune_code`, `section`, `region_code`, etc.) are now robustly validated via `_ensure_fields` in `core/entities.py`, raising explicit `ValueError` on inconsistencies.
+
+---
+
+## 8. Functional Summary
+
+You have a **framework for selecting geographic entities**.
+You can:
 
 ```python
 from geo_selector import selector_factory
@@ -153,33 +145,8 @@ geometry = selector.get_geometry(results[0].code)
 details = selector.get_details(results[0].code)
 ```
 
-* La structure est prête pour ajouter d’autres sources de données, d’autres types d’entités, et pour automatiser des workflows géographiques.
-
----
-_Documentation générée automatiquement_
-
-## 9. **Logging intégré**
-
-Le projet utilise désormais un système de logging centralisé via le fichier [`logging_config.py`](logging_config.py). Ce module configure :
-
-* Le niveau global (variable d’environnement ``LOG_LEVEL`` ; ``INFO`` par défaut).
-* Un ``StreamHandler`` pour la console (développement) et un ``RotatingFileHandler`` qui écrit dans ``logs/geoselector.log`` (production).
-* Un formatteur incluant la date, le niveau, le nom du logger et le message.
-
-Tous les modules clés (`core.service`, `core.selector`, `api.gouvfr`, `core.registry`, `core.strategy_registry`, `core.strategy`) déclarent un logger avec `logger = logging.getLogger(__name__)` et émettent des messages :
-
-* **DEBUG** : paramètres des requêtes, cache hits/misses, création de selectors.
-* **INFO** : succès des appels API, nombre de résultats retournés, enregistrement d’entités/stratégies.
-* **ERROR** : erreurs de requêtes HTTP ou réponses vides.
-
-Le logger est initialisé dès l’import du package grâce à l’instruction ``import logging_config`` dans le fichier ``__init__.py`` du projet.
+The structure is ready for adding more data sources, entity types, and automating geographic workflows.
 
 ---
 
-## 10. **Documentation mise à jour**
-
-Le README a été enrichi avec la section **Logging intégré** décrivant la configuration et l’usage du logger dans le projet.
-
----
-
-_Documentation générée automatiquement_
+_Documentation generated automatically_

@@ -36,11 +36,11 @@ package core {
 
     class Region {
         +code : str                ' code_insee
-        +name : str                ' nom_officiel
+        +name : str                ' official_name
     }
     class Departement {
         +code : str                ' code_insee
-        +name : str                ' nom_officiel
+        +name : str                ' official_name
     }
     class Commune {
         +code : str                ' code_insee
