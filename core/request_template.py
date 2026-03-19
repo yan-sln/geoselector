@@ -25,8 +25,7 @@ class RequestTemplate(Protocol):
         propertyname: str,
         cql: str | None = None,
         **extra: Any,
-    ) -> dict[str, Any]:
-        ...
+    ) -> dict[str, Any]: ...
 
 
 @dataclass(frozen=True)

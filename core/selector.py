@@ -127,17 +127,15 @@ class SelectorImpl:
         * Multiple args map to placeholders via ``_build_filter``.
         """
         logger.debug(
-            "SelectorImpl.get_geometry called for %s "
-            "with args=%s kwargs=%s",
+            "SelectorImpl.get_geometry called for %s " "with args=%s kwargs=%s",
             self.entity_cls.__name__,
             args,
             kwargs,
         )
         # Resolve entity and geometry configuration.
         entity_key = self.service._entity_key(self.entity_cls)
-        entity_cfg: Dict[str, Any] = (
-            self.service.client.config.get("entities", {})
-            .get(entity_key, {})
+        entity_cfg: Dict[str, Any] = self.service.client.config.get("entities", {}).get(
+            entity_key, {}
         )
         geometry_cfg: Dict[str, Any] = entity_cfg.get("geometry", {})
         # If a dict is passed as the first positional argument, forward it.
