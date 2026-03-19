@@ -10,6 +10,8 @@ from __future__ import annotations
 from typing import Callable, Dict, Tuple, List, Any
 
 from .service import GeoService
+import logging
+logger = logging.getLogger(__name__)
 
 # Importing SelectorImpl would cause a circular import because
 # ``selector`` imports ``HandlerRegistry``.

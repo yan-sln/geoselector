@@ -32,7 +32,10 @@ if not logger.handlers:
 
     # Rotating file handler (production)
     log_dir = os.getenv("LOG_DIR", "logs")
-    os.makedirs(log_dir, exist_ok=True)
+    try:
+        os.makedirs(log_dir, exist_ok=True)
+    except OSError as exc:
+        logger.error("Unable to create log directory %s: %s", log_dir, exc)
     file_handler = RotatingFileHandler(
         filename=os.path.join(log_dir, "geoselector.log"),
         maxBytes=5 * 1024 * 1024,  # 5 MiB

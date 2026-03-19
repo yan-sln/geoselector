@@ -11,6 +11,8 @@ The goal is to decouple the construction of request parameters from the
 """
 
 from __future__ import annotations
+import logging
+logger = logging.getLogger(__name__)
 
 import json
 from pathlib import Path
