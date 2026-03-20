@@ -27,8 +27,30 @@ class OperationSelector:
     def choose(args: Tuple[Any, ...], cfg: dict[str, Any]) -> str:
         """Select the appropriate operation key from the entity configuration.
 
-        Supports custom operation names such as ``list_search_parcelle``. The
-        returned key must exist in ``cfg``.
+        Parameters
+        ----------
+        args: Tuple[Any, ...]
+            The raw arguments tuple passed to ``SelectorImpl.select``.
+        cfg: dict[str, Any]
+            The configuration dictionary for the entity extracted from ``apis.json``.
+
+        Returns
+        -------
+        str
+            The operation key that should be used for the request. It will be one
+            of the keys present in ``cfg`` such as ``search_by_name``,
+            ``search_by_code``, ``list_search`` or ``search``.
+
+        Notes
+        -----
+        The method implements a heuristic:
+
+        * If a single ``dict`` argument is provided, it is treated as filters for a
+          list‑search‑like operation.
+        * If a single ``str`` argument is provided, the method decides between a
+          name‑based or code‑based search based on the content of the string.
+        * Otherwise positional arguments are mapped to a list‑search‑like
+          operation.
         """
         # 1⃣ Dict argument – treat as filters for a list‑search‑like operation.
         if args and isinstance(args[0], dict) and len(args) == 1:

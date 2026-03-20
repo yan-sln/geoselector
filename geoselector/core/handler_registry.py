@@ -21,15 +21,29 @@ logger = logging.getLogger(__name__)
 
 
 class HandlerRegistry:
+    """Registry mapping entity/operation pairs to handler callables.
+
+    The registry is a class‑level dictionary where each key is a tuple of
+    ``(entity_key, operation)`` and the value is a callable that, given a selector
+    and a filter dictionary, returns a list of instantiated entity objects.
+    Handlers are populated via :meth:`init` based on the service configuration.
+    """
     _registry: Dict[Tuple[str, str], Callable[[Any, Dict[str, Any]], List[Any]]] = {}
 
     @classmethod
     def init(cls, service: GeoService) -> None:
-        """Populate the registry from the configuration loaded in ``service``.
+        """Initialize the handler registry.
 
-        For every entity and every supported operation (search_by_name,
-        search_by_code, list_search, search) a small lambda is stored that calls
-        the corresponding ``GeoService`` method.
+        Parameters
+        ----------
+        service: GeoService
+            The service instance providing access to the API client and configuration.
+
+        The method reads the ``entities`` section of the configuration loaded in ``service``.
+        For each entity and each supported operation (e.g., ``search_by_name``, ``search_by_code``,
+        ``list_search``, ``search``) it registers a handler lambda that forwards calls to the
+        appropriate ``GeoService`` method. These handlers are stored in the class‑level ``_registry``
+        dictionary keyed by ``(entity_key, operation)``.
         """
         entities_cfg = service.client.config.get("entities", {})
         for entity_key, cfg in entities_cfg.items():
@@ -43,7 +57,24 @@ class HandlerRegistry:
         operation: str,
         service: GeoService,
     ) -> Callable[[Any, Dict[str, Any]], List[Any]]:
-        """Create a handler that returns instantiated entity objects."""
+        """Create a handler callable for a specific operation.
+
+        Parameters
+        ----------
+        operation: str
+            The operation name (e.g., ``search_by_name``) as defined in the
+            configuration for the entity.
+        service: GeoService
+            The service instance used to perform the underlying API request.
+
+        Returns
+        -------
+        Callable[[Any, Dict[str, Any]], List[Any]]
+            A function that accepts a selector (providing ``entity_cls``) and a
+            dictionary of filter arguments, performs the appropriate search via
+            ``service.client.search`` and returns a list of instantiated entity
+            objects.
+        """
 
         def handler(selector: Any, filters: Dict[str, Any]) -> List[Any]:
             entity_key = selector.service._entity_key(selector.entity_cls)
@@ -58,4 +89,18 @@ class HandlerRegistry:
         entity_key: str,
         operation: str,
     ) -> Callable[[Any, Dict[str, Any]], List[Any]] | None:
+        """Retrieve the handler callable for a given entity and operation.
+
+        Parameters
+        ----------
+        entity_key: str
+            The key identifying the entity type (e.g., "country").
+        operation: str
+            The operation name as defined in the configuration (e.g., "search_by_name").
+
+        Returns
+        -------
+        Callable[[Any, Dict[str, Any]], List[Any]] | None
+            The handler function that takes a selector and filter dict and returns a list of instantiated entities, or ``None`` if no handler is registered for the given pair.
+        """
         return cls._registry.get((entity_key, operation))
