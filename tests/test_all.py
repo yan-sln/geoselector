@@ -21,7 +21,7 @@ from typing import Dict, Any, Type
 # Ensure the project root is in sys.path for imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from core.entities import (
+from geoselector.core.entities import (
     Region,
     Departement,
     Commune,
@@ -30,7 +30,7 @@ from core.entities import (
     Parcelle,
     SubdivisionFiscale,
 )
-from core.selector import SelectorFactory
+from geoselector.core.selector import SelectorFactory
 
 # ---------------------------------------------------------------------------
 # Helper to mock the HTTP GET performed by ``ApiClient._cached_get``.
@@ -41,7 +41,7 @@ from core.selector import SelectorFactory
 EMPTY_FEATURES: Dict[str, Any] = {"features": []}
 
 
-@patch("core.api_client.ApiClient._cached_get", return_value=EMPTY_FEATURES)
+@patch("geoselector.core.api_client.ApiClient._cached_get", return_value=EMPTY_FEATURES)
 @pytest.mark.parametrize(
     "entity_cls,search_text",
     [
@@ -81,7 +81,7 @@ def test_selector_select(
     assert results == []
 
 
-@patch("core.api_client.ApiClient._cached_get", return_value=EMPTY_FEATURES)
+@patch("geoselector.core.api_client.ApiClient._cached_get", return_value=EMPTY_FEATURES)
 @pytest.mark.parametrize(
     "entity_cls,code",
     [
@@ -132,7 +132,7 @@ def test_selector_factory_caching() -> None:
 if __name__ == "__main__":
     # Demonstration reproducing the console outputs of the original test scripts
     # Removed duplicate import of SelectorFactory
-    from core.entities import (
+    from geoselector.core.entities import (
         Region,
         Departement,
         Commune,

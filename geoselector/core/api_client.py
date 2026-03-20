@@ -48,7 +48,12 @@ class ApiClient:
         relative to the project root.
     """
 
-    def __init__(self, config_path: str | Path = "config/apis.json"):
+    def __init__(self, config_path: str | Path | None = None):
+        # Resolve default config file packaged with the library
+        if config_path is None:
+            # Path to the directory containing this file, then up to package root
+            base_dir = Path(__file__).resolve().parent.parent
+            config_path = base_dir / "config" / "apis.json"
         self.config_path = Path(config_path)
         if not self.config_path.is_file():
             raise FileNotFoundError(f"API configuration not found: {self.config_path}")
