@@ -28,6 +28,7 @@ class HandlerRegistry:
     and a filter dictionary, returns a list of instantiated entity objects.
     Handlers are populated via :meth:`init` based on the service configuration.
     """
+
     _registry: Dict[Tuple[str, str], Callable[[Any, Dict[str, Any]], List[Any]]] = {}
 
     @classmethod

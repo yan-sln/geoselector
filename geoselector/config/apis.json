@@ -12,11 +12,11 @@
       "TYPENAME": "LIMITES_ADMINISTRATIVES_EXPRESS.LATEST:region",
       "search_by_name": {
         "PROPERTYNAME": "nom_officiel,code_insee",
-        "CQL_FILTER": "nom_officiel='{value}'"
+        "CQL_FILTER": "nom_officiel ILIKE '{value}%'"
       },
       "search_by_code": {
         "PROPERTYNAME": "nom_officiel,code_insee",
-        "CQL_FILTER": "code_insee='{value}'"
+        "CQL_FILTER": "code_insee ILIKE '{value}%'"
       },
       "geometry": {
         "PROPERTYNAME": "geometrie",
@@ -27,11 +27,11 @@
       "TYPENAME": "LIMITES_ADMINISTRATIVES_EXPRESS.LATEST:departement",
       "search_by_name": {
         "PROPERTYNAME": "nom_officiel,code_insee",
-        "CQL_FILTER": "nom_officiel='{value}'"
+        "CQL_FILTER": "nom_officiel ILIKE '{value}%'"
       },
       "search_by_code": {
         "PROPERTYNAME": "nom_officiel,code_insee",
-        "CQL_FILTER": "code_insee='{value}'"
+        "CQL_FILTER": "code_insee ILIKE '{value}%'"
       },
       "geometry": {
         "PROPERTYNAME": "geometrie",
@@ -42,12 +42,12 @@
       "TYPENAME": "CADASTRALPARCELS.PARCELLAIRE_EXPRESS:commune",
       "search_by_name": {
         "PROPERTYNAME": "code_insee,nom_com",
-        "CQL_FILTER": "nom_com='{value}'"
+        "CQL_FILTER": "nom_com ILIKE '{value}%'"
       },
-      "search_by_code": {
-        "PROPERTYNAME": "code_insee,nom_com",
-        "CQL_FILTER": "code_insee='{value}'"
-      },
+        "search_by_code": {
+          "PROPERTYNAME": "code_insee,nom_com",
+          "CQL_FILTER": "code_insee ILIKE '{value}%'"
+        },
       "geometry": {
         "PROPERTYNAME": "geom",
         "CQL_FILTER": "code_insee='{value}'"
