@@ -1,0 +1,112 @@
+{
+  "base_url": "https://data.geopf.fr/wfs/ows",
+  "api_type": "wfs",
+  "common": {
+    "SERVICE": "WFS",
+    "VERSION": "2.0.0",
+    "REQUEST": "GetFeature",
+    "OUTPUTFORMAT": "application/json"
+  },
+  "entities": {
+    "region": {
+      "TYPENAME": "LIMITES_ADMINISTRATIVES_EXPRESS.LATEST:region",
+      "search_by_name": {
+        "PROPERTYNAME": "nom_officiel,code_insee",
+        "CQL_FILTER": "nom_officiel ILIKE '{value}%'"
+      },
+      "search_by_code": {
+        "PROPERTYNAME": "nom_officiel,code_insee",
+        "CQL_FILTER": "code_insee ILIKE '{value}%'"
+      },
+      "geometry": {
+        "PROPERTYNAME": "geometrie",
+        "CQL_FILTER": "code_insee='{value}'"
+      }
+    },
+    "departement": {
+      "TYPENAME": "LIMITES_ADMINISTRATIVES_EXPRESS.LATEST:departement",
+      "search_by_name": {
+        "PROPERTYNAME": "nom_officiel,code_insee",
+        "CQL_FILTER": "nom_officiel ILIKE '{value}%'"
+      },
+      "search_by_code": {
+        "PROPERTYNAME": "nom_officiel,code_insee",
+        "CQL_FILTER": "code_insee ILIKE '{value}%'"
+      },
+      "geometry": {
+        "PROPERTYNAME": "geometrie",
+        "CQL_FILTER": "code_insee='{value}'"
+      }
+    },
+    "commune": {
+      "TYPENAME": "CADASTRALPARCELS.PARCELLAIRE_EXPRESS:commune",
+      "search_by_name": {
+        "PROPERTYNAME": "code_insee,nom_com",
+        "CQL_FILTER": "nom_com ILIKE '{value}%'"
+      },
+        "search_by_code": {
+          "PROPERTYNAME": "code_insee,nom_com",
+          "CQL_FILTER": "code_insee ILIKE '{value}%'"
+        },
+      "geometry": {
+        "PROPERTYNAME": "geom",
+        "CQL_FILTER": "code_insee='{value}'"
+      }
+    },
+    "arrondissement": {
+      "TYPENAME": "CADASTRALPARCELS.PARCELLAIRE_EXPRESS:arrondissement",
+      "list_search": {
+        "PROPERTYNAME": "code_insee,nom_arr,code_arr",
+        "CQL_FILTER": "code_insee='{value}'"
+      },
+      "geometry": {
+        "PROPERTYNAME": "geom",
+        "CQL_FILTER": "code_arr='{value}'"
+      }
+    },
+    "section": {
+      "TYPENAME": "CADASTRALPARCELS.PARCELLAIRE_EXPRESS:feuille",
+      "list_search": {
+        "PROPERTYNAME": "code_insee,section",
+        "CQL_FILTER": "code_insee='{code_insee}'"
+      },
+      "geometry": {
+        "PROPERTYNAME": "geom",
+        "CQL_FILTER": "code_insee='{code_insee}' AND section='{section}'"
+      }
+    },
+    "feuille": {
+      "TYPENAME": "CADASTRALPARCELS.PARCELLAIRE_EXPRESS:feuille",
+      "list_search": {
+        "PROPERTYNAME": "code_insee,section,feuille",
+        "CQL_FILTER": "code_insee='{code_insee}' AND section='{section}'"
+      },
+      "geometry": {
+        "PROPERTYNAME": "geom",
+        "CQL_FILTER": "code_insee='{code_insee}' AND section='{section}' AND feuille='{feuille}'"
+      }
+    },
+    "parcelle": {
+      "TYPENAME": "CADASTRALPARCELS.PARCELLAIRE_EXPRESS:parcelle",
+      "list_search_parcelle": {
+        "PROPERTYNAME": "code_insee,section,numero,idu",
+        "CQL_FILTER": "code_insee='{code_insee}' AND section='{section}'"
+      },
+      "geometry": {
+        "PROPERTYNAME": "geom",
+        "featureId": "{featureId}"
+      }
+    },
+    "subdivision_fiscale": {
+      "TYPENAME": "CADASTRALPARCELS.PARCELLAIRE_EXPRESS:subdivision_fiscale",
+      "list_search": {
+        "PROPERTYNAME": "gid,idu_parcel,lettre",
+        "CQL_FILTER": "idu_parcel='{idu_parcel}'"
+      },
+      "geometry": {
+        "PROPERTYNAME": "geom",
+        "CQL_FILTER": "gid='{value}'"
+      }
+    }
+  }
+}

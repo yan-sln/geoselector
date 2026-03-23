@@ -1,157 +1,301 @@
 # GeoSelector
 
-## 1. **Architecture générale**
+## Overview
 
-Le dépôt est organisé en trois grands modules principaux :
+`geoselector` is a **generic API client framework** for interacting with any WFS‑like (Web Feature Service) geographic data source. It provides a high‑level, type‑safe selector API that abstracts request building, caching, error handling, and logging, allowing developers to focus on business logic rather than low‑level HTTP details.
 
+## Project Structure
+
+```text
+geoselector/
+├── __init__.py
+├── core/
+│   ├── __init__.py
+│   ├── api_client.py
+│   ├── selector.py
+│   ├── service.py
+│   ├── operation_selector.py
+│   ├── handler_registry.py
+│   ├── request_builder.py
+│   └── request_template.py
+├── config/
+│   ├── __init__.py
+│   ├── apis.json
+│   └── README.md
+└── logging_config.py
+
+tests/
+└── test_all.py
+README.md
+pyproject.toml
+requirements.txt
 ```
-geo_selector/
-├── api/          # Adaptateurs pour différentes APIs géographiques
-├── core/         # Logique centrale et entités
-└── factory/      # Factories pour créer des sélecteurs d'entités
+
+## What `geoselector` Offers
+
+- **Generic API client** – [`geoselector/core/api_client.py`](geoselector/core/api_client.py) reads a JSON configuration file ([`geoselector/config/apis.json`](geoselector/config/apis.json)) that describes any WFS‑like service (endpoints, parameters).
+- **Selector** – [`geoselector/core/selector.py`](geoselector/core/selector.py) builds requests for a given entity class, applies an LRU cache (`functools.lru_cache`), and returns raw JSON structures.
+- **Operation selector**, **handler registry**, and **service** layers – enable adding new entities without writing new request code. See [`geoselector/core/operation_selector.py`](geoselector/core/operation_selector.py), [`geoselector/core/handler_registry.py`](geoselector/core/handler_registry.py), and [`geoselector/core/service.py`](geoselector/core/service.py).
+- **Centralised logging** – configured via [`geoselector/logging_config.py`](geoselector/logging_config.py).
+- **Error handling** – unified `ApiError` exception hierarchy.
+- **Raw geometry output** – returns GeoJSON dictionaries; conversion to `QgsGeometry` (or other GIS libraries) is left to the caller.
+
+## Installation
+
+> **Note**: The package is currently under active development. Install from the repository for the latest features:
+>
+> ```bash
+> git clone https://github.com/yan-sln/geoselector.git
+> cd geoselector
+> pip install -e .
+> ```
+
+## Configuration
+
+The core client reads its service definitions from **`geoselector/config/apis.json`**. A minimal example:
+
+```json
+{
+  "base_url": "https://data.geopf.fr/wfs/ows",
+  "api_type": "wfs",
+  "common": {
+    "SERVICE": "WFS",
+    "VERSION": "2.0.0",
+    "REQUEST": "GetFeature",
+    "OUTPUTFORMAT": "application/json"
+  },
+  "entities": {
+    "region": {
+      "TYPENAME": "LIMITES_ADMINISTRATIVES_EXPRESS.LATEST:region",
+      "search_by_name": {
+        "PROPERTYNAME": "nom_officiel,code_insee",
+        "CQL_FILTER": "nom_officiel ILIKE '{value}%'"
+      },
+      "search_by_code": {
+        "PROPERTYNAME": "nom_officiel,code_insee",
+        "CQL_FILTER": "code_insee ILIKE '{value}%'"
+      },
+      "geometry": {
+        "PROPERTYNAME": "geometrie",
+        "CQL_FILTER": "code_insee='{value}'"
+      }
+    }
+  }
+}
 ```
 
-* **`api`** : contient les implémentations concrètes des stratégies d’accès aux données géographiques (Gouv.fr et IGN).
-* **`core`** : cœur du système, avec les entités, les services, les sélecteurs, et le registre d’entités.
-* **`factory`** : permet de créer facilement des selectors typés, avec une API et une stratégie donnée.
+Add or modify entries to match your data source. The framework will automatically generate request URLs based on the configuration. For a detailed explanation of the JSON structure and how to add another API, see the configuration guide in [`geoselector/config/README.md`](geoselector/config/README.md).
 
----
+## Core Components
 
-## 2. **`core` : cœur fonctionnel**
+| Component | Description | Key File |
+|-----------|-------------|----------|
+| **API Client** | Low‑level HTTP wrapper that loads the JSON config and performs GET/POST calls. Handles retries and basic error mapping. | [`geoselector/core/api_client.py`](geoselector/core/api_client.py) |
+| **Selector** | High‑level façade exposing `select` and `get_geometry` methods for a given entity class. Utilises caching for repeated queries. | [`geoselector/core/selector.py`](geoselector/core/selector.py) |
+| **Operation Selector** | Maps entity operations (search, fetch geometry) to concrete request templates. | [`geoselector/core/operation_selector.py`](geoselector/core/operation_selector.py) |
+| **Handler Registry** | Registry pattern that stores operation handlers, making the system extensible without modifying core code. | [`geoselector/core/handler_registry.py`](geoselector/core/handler_registry.py) |
+| **Service Layer** | Orchestrates the API client and operation selector, providing a clean service‑oriented API. | [`geoselector/core/service.py`](geoselector/core/service.py) |
+| **Logging Config** | Centralised `logging` configuration used throughout the package. | [`geoselector/logging_config.py`](geoselector/logging_config.py) |
 
-### a) **Entities (`entities.py`)**
+## Diagram
 
-* Définit la classe abstraite `GeoEntity` avec une interface `from_dict`.
-* Les sous-classes concrètes représentent des entités géographiques :
+<img width="3103" height="1340" alt="FLVTRJ~1" src="https://github.com/user-attachments/assets/06a3225a-184a-4ba5-bb40-8f51d963dc25" />
 
-  * `Municipality` → communes
-  * `Department` → départements
-  * `Region` → régions
-  * `Parcel` → parcelles cadastrales
-  * `Section` → sections cadastrales
-* Chaque entité déclare `API_ENDPOINT`, ce qui permet de l’enregistrer automatiquement dans `EntityRegistry`.
+```plantuml
+@startuml
+' ==========================================================
+' Packages and core components
+' ==========================================================
 
-### b) **Registry (`registry.py`)**
+note as N1
+#Créer le selecteur en fonction de l'entité souhaitée
+region_selector = SelectorFactory.create_selector(Region)
 
-* `EntityRegistry` stocke les entités par leur `API_ENDPOINT`.
-* Méthodes :
+#Recherche la liste des entités
+region_by_name = region_selector.select("Bretagne")
+region_by_code = region_selector.select("53")
 
-  * `register` → ajouter une entité
-  * `get` → récupérer une entité via son endpoint
-  * `list_entities` → lister toutes les entités enregistrées
-* Sert à relier dynamiquement les entités aux stratégies API.
+#Récupère la géométrie de l'entité
+region_geom = region_by_code[0].get_geometry()
 
-### c) **Service (`service.py`)**
+#Ou récupère directement la geometry
+region_geom = region_selector.get_geometry("53")
+end note
 
-* `GeoService` : abstraction pour interroger n’importe quelle API via une `ApiStrategy`.
-* Méthodes :
+class "ApiError" as ApiError << (E,red) >> {
+    +__init__(message: str, url: str | None = None)
+}
 
-  * `search_entities(entity_class, text)`
-  * `fetch_entity_geometry(entity_class, code)`
-  * `get_entity_details(entity_class, code)`
+interface "RequestTemplate" as RequestTemplate << (I,orange) >> {
+    +SERVICE: str
+    +VERSION: str
+    +REQUEST: str
+    +OUTPUTFORMAT: str
+    +build(typename: str, propertyname: str, cql: str | None, extra: dict): dict
+}
+note right of RequestTemplate
+    Fields correspond to the WFS API configuration
+end note
 
-### d) **Selectors (`selector.py`)**
+class "RequestBuilder" as RequestBuilder << (B,lightblue) >> {
+    +load_api_config(path: str = "config/apis.json"): dict
+    +wfs_builder(common: dict): Callable
+    +get_request_builder(config: dict): Callable
+}
+note right of RequestBuilder
+    wfs_builder is specific to the WFS API
+end note
 
-* `EntitySelector` : interface typée pour sélectionner des entités.
-* `EntitySelectorImpl` : implémentation générique qui utilise `GeoService` pour exécuter les recherches et récupérer géométrie/détails.
-* Permet un typage fort : par exemple un `EntitySelector<Municipality>` renvoie toujours des objets `Municipality`.
+class "ApiClient" as ApiClient << (C,lightgreen) >> {
+    -config_path: Path
+    -config: dict
+    -builder: Callable
+    -base_url: str
+    +search(entity: str, mode: str, **values): list
+    +fetch_geometry(entity: str, **values): dict | None
+    -_build_url(entity: str, operation: str, **values): str
+    -_cached_get(url: str): dict
+}
 
-### e) **Strategy (`strategy.py`)**
+class "apis.json" as ApisConfig << (J,violet) >> {
+}
 
-* Interface `ApiStrategy` pour standardiser les appels API.
-* Les méthodes abstraites sont :
+note right of ApisConfig
+Correspond au fichier JSON.
+User : édite ce fichier pour configurer les entités
+end note
 
-  * `search(endpoint, text)`
-  * `fetch_geometry(endpoint, code)`
-  * `fetch_details(endpoint, code)`
+abstract class "GeoEntity" as GeoEntity << (A,gray) >> {
+    +code: str
+    -_geometry: dict | None
+    -_service: GeoService | None
+    +set_service(service: GeoService): None
+    +has_geometry(): bool
+    +get_geometry(force: bool = False): dict | None
+    +from_api(raw: dict): GeoEntity
+}
 
----
+note right of GeoEntity
+User : appelle get_geometry()
+end note
 
-## 3. **`api` : implémentation des stratégies**
+class "GeoService" as GeoService << (S,yellow) >> {
+    -client: ApiClient
+    +search_by_name(entity_cls: Type, name: str, limit: int = None): list
+    +search_by_code(entity_cls: Type, code: str, limit: int = None): list
+    +list_entities(entity_cls: Type, **filters): list
+    +list_search(entity_cls: Type, **filters): list
+    +search_entities(entity_cls: Type, text: str, limit: int = None): list
+    +fetch_entity_geometry(entity_cls: Type, *args, **kwargs): dict | None
+}
+note right of GeoService
+    Methods depend on the WFS API (operations defined in apis.json)
+    Extend or adapt when supporting other APIs
+end note
 
-### a) **`gouvfr.py`**
+class "OperationSelector" as OperationSelector << (O,pink) >> {
+    +choose(args: Tuple, cfg: dict): str
+}
 
-* Implémente `GouvFrApiStrategy` pour l’API `geo.api.gouv.fr`.
-* Méthodes complètes avec formatage spécifique pour chaque type d’entité.
-* Gestion des erreurs via `try/except` et logs simples (`print`).
-* Supporte :
+class "HandlerRegistry" as HandlerRegistry << (H,pink) >> {
+    -_registry: dict
+    +init(service: GeoService): None
+    +get(entity_key: str, operation: str): Callable | None
+    -_build_handler(operation: str, service: GeoService): Callable
+}
 
-  * Communes, départements, régions
-  * Parcelles et sections cadastrales
+class "SelectorImpl" as SelectorImpl << (L,lightgray) >> {
+    -entity_cls: Type
+    -service: GeoService
+    +select(*args, **kwargs): list
+    +get_geometry(*args, **kwargs): dict | None
+}
 
-### b) **`ign.py`**
+note right of SelectorImpl
+User : appelle select() ou get_geometry()
+end note
 
-* Implémente `IGNApiStrategy`.
-* Actuellement minimaliste : toutes les méthodes font juste un `print` et renvoient des structures vides.
-* À compléter pour interroger l’API IGN réelle.
+class "SelectorFactory" as SelectorFactory << (F,brown) >> {
+    -_services: dict
+    +create_selector(entity_cls: Type): SelectorImpl
+    +reset(): None
+}
 
----
+note right of SelectorFactory
+User : crée un sélecteur
+end note
 
-## 4. **`factory` : création des selectors**
+' ==========================================================
+' Relations
+' ==========================================================
 
-### `selector_factory.py`
+ApiClient --> RequestTemplate : uses build
+ApiClient --> RequestBuilder : uses get_request_builder
+ApiClient --> RequestBuilder : uses load_api_config
+ApiClient --> ApisConfig : loads config
+ApiClient --> ApiError : raises
 
-* `SelectorFactory` fournit une interface simple pour créer des sélecteurs typés :
+GeoService --> ApiClient : uses search / fetch_geometry
+GeoService --> GeoEntity : instantiates via from_api
+GeoService --> ApisConfig : accesses config
+GeoService --> ApiError : may raise
+
+SelectorImpl --> GeoService : uses service
+SelectorImpl --> HandlerRegistry : uses get
+SelectorImpl --> OperationSelector : uses choose
+SelectorImpl --> GeoEntity : returns instances
+
+SelectorFactory --> SelectorImpl : creates
+SelectorFactory --> GeoService : caches
+SelectorFactory --> ApiClient : creates
+
+HandlerRegistry --> GeoService : init
+HandlerRegistry --> ApisConfig : reads config
+
+OperationSelector --> ApisConfig : reads config
+
+@enduml
+```
+
+## Quick Usage Example
 
 ```python
-selector = SelectorFactory.create_selector(Municipality, "GOUVFRApiStrategy")
-```
+from geoselector.core.selector import Selector
+from geoselector.core.entities import Commune
 
-* Fonctionnement :
+# Initialise a selector for the Municipality entity
+selector = Selector(Commune)
 
-  1. Récupère la stratégie API dans `STRATEGIES`.
-  2. Instancie `GeoService` avec cette stratégie.
-  3. Retourne un `EntitySelectorImpl` typé avec la classe d’entité donnée.
-
----
-
-## 5. **Exposition publique (`__init__.py`)**
-
-* Le package `geo_selector` expose directement :
-
-  ```python
-  core_service       # alias GeoService
-  selector_factory   # alias SelectorFactory
-  ```
-* Les utilisateurs peuvent donc créer un service ou un selector facilement sans naviguer dans les sous-modules.
-
----
-
-## 6. **Points forts**
-
-* Architecture claire en **couches** : API ↔ Service ↔ Selector ↔ Entité.
-* Typage fort grâce à `Generic[T]`.
-* Extensible : ajouter une nouvelle API ou entité se fait facilement via `ApiStrategy` et `GeoEntity`.
-* Factory simplifie la création de selectors.
-
----
-
-## 7. **Points à améliorer**
-
-1. **IGNApiStrategy** : à implémenter correctement.
-2. **Logging et erreurs** : remplacer les `print` par un vrai `logger`.
-3. **Tests unitaires** : pas visibles ici, mais cruciaux pour valider les stratégies API et le mapping des entités.
-4. **Pagination / limites** : `GouvFrApiStrategy.search` limite actuellement à 10 résultats fixes.
-5. **Validation des données** : certains champs optionnels (`commune_code`, `section`) pourraient avoir des validations plus robustes.
-
----
-
-## 8. **Résumé fonctionnel**
-
-* Tu as un **framework de sélection d’entités géographiques**.
-* On peut faire :
-
-```python
-from geo_selector import selector_factory
-from geo_selector.core.entities import Municipality
-
-selector = selector_factory.create_selector(Municipality, "GOUVFRApiStrategy")
+# Search for municipalities matching a text query
 results = selector.select("Paris")
-geometry = selector.get_geometry(results[0].code)
-details = selector.get_details(results[0].code)
+print(f"Found {len(results)} results")
+
+# Retrieve raw geometry (GeoJSON) for the first result
+geometry = results[0].get_geometry()
+print("Geometry (GeoJSON):", geometry)
 ```
 
-* La structure est prête pour ajouter d’autres sources de données, d’autres types d’entités, et pour automatiser des workflows géographiques.
+## Extensibility
 
----
-_Documentation générée automatiquement_
+- **New Services** – Add a new entry to `apis.json` and, if necessary, implement a custom request template in [`geoselector/core/request_template.py`](geoselector/core/request_template.py).
+- **New Entities** – Subclass `GeoEntity` (found in [`geoselector/core/entities.py`](geoselector/core/entities.py)) and set `API_ENDPOINT`. The selector will handle it out‑of‑the‑box.
+- **Custom Handlers** – Register a custom operation handler via the `HandlerRegistry` to override default behaviour for a specific service.
+
+## Future Developments
+
+- Logging in `logging_config.py` configures the root logger, which may affect other libraries; consider using a module‑specific logger.
+- Déplacer fichier des logs qui se met à la racine utilisateur pour le moment ?
+- Ajouter les tests pertinents.
+- Push ./scripts/validate_config.py qui permet de s'assurer qu'apis.json est bien formé pour l'architecture.
+- `OperationSelector.choose` contains several nested conditionals; could be refactored for readability. Refactor OperationSelector: Extract heuristics into separate helper functions to simplify the choose method.
+- Ajouter sécurité pour dire lorsque paramètre de recherche d'un GeoEntity incorrect, au lieu de mettre des champs à None !
+- Etendre ApiError : envelopper les appels du service (GeoService, SelectorImpl) dans des blocs try/except ApiError afin de fournir des messages d’erreur plus conviviaux ou de déclencher des mécanismes de retry.
+- Ajouter limiteur de requête en fonction API : Diffusion d'objets WFS = 30 requêtes/s +ajouter dans le readme : https://geoservices.ign.fr/documentation/services/limite-d-usage + disponibilité : https://geoservices.ign.fr/documentation/services/disponibilite
+- Voir si faire de GeoService un singleton.
+- Finir de compléter config/README.md et traduire en anglais.
+- S'assurer du bon contrôle des types tout au long de l'architecture. Nota :
+    - core/selector.py – _build_filter Retourne Dict[str, Any] avec des valeurs provenant directement de args. Aucun cast ni validation. Si un argument est None ou un type inattendu, le filtre envoyé au serveur peut être invalide.
+    - core/service.py – search_entities Utilise re.sub pour convertir le nom de classe en clé, mais ne vérifie pas que la clé existe dans la configuration. KeyError ou appel à une opération inexistante, capturé mais masqué par un print.
+- `SelectorImpl.select` raises generic `ValueError` for missing arguments; could use a custom exception for clarity.
+- Vérifier le parcours de geometry d'une entité après list select ; par exemple : dès que plus qu'un élément dans la liste, on récupère la géométrie.
+- Dans l'intégration actuelle avec secateur, quand on tape deux chiffres pour une commune, la première requête met en cache tout le département (intérêt et que après y'a plus besoin de requêter, inconvénient grosse première requête)
