@@ -99,6 +99,8 @@ Add or modify entries to match your data source. The framework will automaticall
 
 ## Diagram
 
+<img width="3103" height="1340" alt="FLVTRJ~1" src="https://github.com/user-attachments/assets/06a3225a-184a-4ba5-bb40-8f51d963dc25" />
+
 ```plantuml
 @startuml
 ' ==========================================================
