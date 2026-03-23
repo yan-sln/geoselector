@@ -285,13 +285,14 @@ print("Geometry (GeoJSON):", geometry)
 
 - Logging in `logging_config.py` configures the root logger, which may affect other libraries; consider using a module‑specific logger.
 - Déplacer fichier des logs qui se met à la racine utilisateur pour le moment ?
-- Ajouter les tests pertinents
+- Ajouter les tests pertinents.
+- Push ./scripts/validate_config.py qui permet de s'assurer qu'apis.json est bien formé pour l'architecture.
 - `OperationSelector.choose` contains several nested conditionals; could be refactored for readability. Refactor OperationSelector: Extract heuristics into separate helper functions to simplify the choose method.
 - Ajouter sécurité pour dire lorsque paramètre de recherche d'un GeoEntity incorrect, au lieu de mettre des champs à None !
 - Etendre ApiError : envelopper les appels du service (GeoService, SelectorImpl) dans des blocs try/except ApiError afin de fournir des messages d’erreur plus conviviaux ou de déclencher des mécanismes de retry.
 - Ajouter limiteur de requête en fonction API : Diffusion d'objets WFS = 30 requêtes/s +ajouter dans le readme : https://geoservices.ign.fr/documentation/services/limite-d-usage + disponibilité : https://geoservices.ign.fr/documentation/services/disponibilite
 - Voir si faire de GeoService un singleton.
-- Finir de compléter config/README.md
+- Finir de compléter config/README.md et traduire en anglais.
 - S'assurer du bon contrôle des types tout au long de l'architecture. Nota :
     - core/selector.py – _build_filter Retourne Dict[str, Any] avec des valeurs provenant directement de args. Aucun cast ni validation. Si un argument est None ou un type inattendu, le filtre envoyé au serveur peut être invalide.
     - core/service.py – search_entities Utilise re.sub pour convertir le nom de classe en clé, mais ne vérifie pas que la clé existe dans la configuration. KeyError ou appel à une opération inexistante, capturé mais masqué par un print.
