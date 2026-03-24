@@ -286,6 +286,7 @@ print("Geometry (GeoJSON):", geometry)
 - Logging in `logging_config.py` configures the root logger, which may affect other libraries; consider using a module‑specific logger.
 - Déplacer fichier des logs qui se met à la racine utilisateur pour le moment ?
 - Ajouter les tests pertinents.
+- Question taille max du cache pour les GeoEntity.
 - Push ./scripts/validate_config.py qui permet de s'assurer qu'apis.json est bien formé pour l'architecture.
 - `OperationSelector.choose` contains several nested conditionals; could be refactored for readability. Refactor OperationSelector: Extract heuristics into separate helper functions to simplify the choose method.
 - Ajouter sécurité pour dire lorsque paramètre de recherche d'un GeoEntity incorrect, au lieu de mettre des champs à None !
@@ -298,4 +299,3 @@ print("Geometry (GeoJSON):", geometry)
     - core/service.py – search_entities Utilise re.sub pour convertir le nom de classe en clé, mais ne vérifie pas que la clé existe dans la configuration. KeyError ou appel à une opération inexistante, capturé mais masqué par un print.
 - `SelectorImpl.select` raises generic `ValueError` for missing arguments; could use a custom exception for clarity.
 - Vérifier le parcours de geometry d'une entité après list select ; par exemple : dès que plus qu'un élément dans la liste, on récupère la géométrie.
-- Dans l'intégration actuelle avec secateur, quand on tape deux chiffres pour une commune, la première requête met en cache tout le département (intérêt et que après y'a plus besoin de requêter, inconvénient grosse première requête)
