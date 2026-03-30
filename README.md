@@ -36,7 +36,7 @@ requirements.txt
 - **Generic API client** – [`geoselector/core/api_client.py`](geoselector/core/api_client.py) reads a JSON configuration file ([`geoselector/config/apis.json`](geoselector/config/apis.json)) that describes any WFS‑like service (endpoints, parameters).
 - **Selector** – [`geoselector/core/selector.py`](geoselector/core/selector.py) builds requests for a given entity class, applies an LRU cache (`functools.lru_cache`), and returns raw JSON structures.
 - **Operation selector**, **handler registry**, and **service** layers – enable adding new entities without writing new request code. See [`geoselector/core/operation_selector.py`](geoselector/core/operation_selector.py), [`geoselector/core/handler_registry.py`](geoselector/core/handler_registry.py), and [`geoselector/core/service.py`](geoselector/core/service.py).
-- **Centralised logging** – configured via [`geoselector/logging_config.py`](geoselector/logging_config.py).
+- **Centralised QGIS logging** – configured via [`geoselector/logging_config.py`](geoselector/logging_config.py) and used across the package.
 - **Error handling** – unified `ApiError` exception hierarchy.
 - **Raw geometry output** – returns GeoJSON dictionaries; conversion to `QgsGeometry` (or other GIS libraries) is left to the caller.
 
@@ -95,7 +95,7 @@ Add or modify entries to match your data source. The framework will automaticall
 | **Operation Selector** | Maps entity operations (search, fetch geometry) to concrete request templates. | [`geoselector/core/operation_selector.py`](geoselector/core/operation_selector.py) |
 | **Handler Registry** | Registry pattern that stores operation handlers, making the system extensible without modifying core code. | [`geoselector/core/handler_registry.py`](geoselector/core/handler_registry.py) |
 | **Service Layer** | Orchestrates the API client and operation selector, providing a clean service‑oriented API. | [`geoselector/core/service.py`](geoselector/core/service.py) |
-| **Logging Config** | Centralised `logging` configuration used throughout the package. | [`geoselector/logging_config.py`](geoselector/logging_config.py) |
+| **Logging Config** | Centralised QGIS logging configuration used throughout the package. | [`geoselector/logging_config.py`](geoselector/logging_config.py) |
 
 ## Diagram
 
@@ -283,7 +283,7 @@ print("Geometry (GeoJSON):", geometry)
 
 ## Future Developments
 
-- Logging in `logging_config.py` configures the root logger, which may affect other libraries; consider using a module‑specific logger.
+- QGIS logging in `logging_config.py` configures a QGIS‑native handler; consider using a module‑specific logger if needed.
 - Déplacer fichier des logs qui se met à la racine utilisateur pour le moment ?
 - Ajouter les tests pertinents.
 - Question taille max du cache pour les GeoEntity.
