@@ -169,7 +169,7 @@ if __name__ == "__main__":
 
     # Commune
     com_selector = SelectorFactory.create_selector(Commune)
-    com_res = com_selector.select("Bretagne")
+    com_res = com_selector.select("Bretagne", limit=2)
     print("Commune recherche :", com_res)
     com_geom = com_selector.get_geometry("59521")
     print(

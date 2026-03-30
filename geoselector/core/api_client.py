@@ -119,6 +119,10 @@ class ApiClient:
             else:
                 extra[key] = val
 
+        if "limit" in values:
+            # Prefer the caller‑supplied limit and store it under the WFS‑expected name
+            extra["COUNT"] = values["limit"]
+
         # Build the full parameter dictionary using the request builder.
         # Ensure the resulting mapping is mutable.
         params = dict(

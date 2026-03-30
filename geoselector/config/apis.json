@@ -42,11 +42,13 @@
       "TYPENAME": "CADASTRALPARCELS.PARCELLAIRE_EXPRESS:commune",
       "search_by_name": {
         "PROPERTYNAME": "code_insee,nom_com",
-        "CQL_FILTER": "nom_com ILIKE '{value}%'"
+        "CQL_FILTER": "nom_com ILIKE '{value}%'",
+          "COUNT": null
       },
         "search_by_code": {
           "PROPERTYNAME": "code_insee,nom_com",
-          "CQL_FILTER": "code_insee ILIKE '{value}%'"
+          "CQL_FILTER": "code_insee ILIKE '{value}%'",
+          "COUNT": null
         },
       "geometry": {
         "PROPERTYNAME": "geom",

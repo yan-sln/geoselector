@@ -116,6 +116,9 @@ class SelectorImpl:
         # Build filters using the unified helper.
         operation_cfg = cfg.get(operation, {})
         filters = _build_filter(operation_cfg, args)
+        # Forward any additional keyword arguments (e.g., limit) to the client.
+        if kwargs:
+            filters.update(kwargs)
         return handler(self, filters)
 
     def get_geometry(self, *args: Any, **kwargs: Any) -> Optional[Dict[str, Any]]:
