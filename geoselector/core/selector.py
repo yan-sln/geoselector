@@ -19,7 +19,7 @@ from .api_client import ApiClient
 from .operation_selector import OperationSelector
 from .handler_registry import HandlerRegistry
 
-logger = logging.getLogger(__name__)
+from ..logging_config import logger
 
 T = TypeVar("T", bound=GeoEntity)
 

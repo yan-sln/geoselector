@@ -12,7 +12,7 @@ from typing import Callable, Dict, Tuple, List, Any
 from .service import GeoService
 import logging
 
-logger = logging.getLogger(__name__)
+from ..logging_config import logger
 
 # Importing SelectorImpl would cause a circular import because
 # ``selector`` imports ``HandlerRegistry``.

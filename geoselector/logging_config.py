@@ -1,49 +1,70 @@
-"""Simple logging configuration for the geoselector package.
+"""QGIS-native logging configuration for the geoselector package.
 
-This module is imported automatically from the package's ``__init__`` and sets up a
-basic logger with a console handler (development) and a rotating file handler
-(production). The log level can be overridden with the ``LOG_LEVEL`` environment
-variable. Duplicate handlers are avoided when the module is re‑imported.
+This module configures a Python logger that forwards all messages to the
+QGIS message log panel via QgsMessageLog. It is designed for QGIS plugins
+and avoids console/file handlers in favor of native integration.
+
+The logger is initialized once and can be imported safely across modules
+without duplicating handlers.
 """
 
-import os
+from __future__ import annotations
+
 import logging
-from logging.handlers import RotatingFileHandler
+from typing import Final
 
-# Log level configurable via environment (default INFO)
-log_level = os.getenv("LOG_LEVEL", "INFO").upper()
+from qgis.core import Qgis, QgsMessageLog
 
-# Root logger for the package
-logger = logging.getLogger()
-logger.setLevel(getattr(logging, log_level, logging.INFO))
+# Public logger name (used across the plugin)
+LOGGER_NAME: Final[str] = "geoselector"
 
-# Add handlers only once
-if not logger.handlers:
-    # Common formatter
-    formatter = logging.Formatter(
-        fmt="%(asctime)s %(levelname)s %(name)s %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+# Tag displayed in QGIS log panel (should match plugin name)
+QGIS_TAG: Final[str] = "GeoSelector"
 
-    # Console handler (development)
-    console_handler = logging.StreamHandler()
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
 
-    # Rotating file handler (production)
-    log_dir = os.getenv("LOG_DIR", "logs")
-    try:
-        os.makedirs(log_dir, exist_ok=True)
-    except OSError as exc:
-        logger.error("Unable to create log directory %s: %s", log_dir, exc)
-    file_handler = RotatingFileHandler(
-        filename=os.path.join(log_dir, "geoselector.log"),
-        maxBytes=5 * 1024 * 1024,  # 5 MiB
-        backupCount=5,
-        encoding="utf-8",
-    )
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
+class QgisLogHandler(logging.Handler):
+    """Logging handler that forwards records to QGIS."""
 
-    # Prevent propagation to parent loggers to avoid duplicate output
-    logger.propagate = False
+    def emit(self, record: logging.LogRecord) -> None:
+        """Emit a log record to the QGIS message log."""
+        try:
+            message: str = self.format(record)
+            level: Qgis.MessageLevel = self._map_level(record.levelno)
+
+            QgsMessageLog.logMessage(message, QGIS_TAG, level)
+        except Exception:  # pragma: no cover
+            # Avoid crashing QGIS logging on unexpected errors
+            self.handleError(record)
+
+    @staticmethod
+    def _map_level(levelno: int) -> Qgis.MessageLevel:
+        """Map Python logging levels to QGIS levels."""
+        if levelno >= logging.ERROR:
+            return Qgis.Critical
+        if levelno >= logging.WARNING:
+            return Qgis.Warning
+        return Qgis.Info
+
+
+def setup_logger() -> logging.Logger:
+    """Configure and return the package logger.
+
+    The logger is configured only once. Subsequent calls return the same
+    instance without adding duplicate handlers.
+    """
+    logger: logging.Logger = logging.getLogger(LOGGER_NAME)
+    logger.setLevel(logging.INFO)
+
+    if not logger.handlers:
+        handler: logging.Handler = QgisLogHandler()
+        formatter = logging.Formatter("%(levelname)s: %(message)s")
+        handler.setFormatter(formatter)
+
+        logger.addHandler(handler)
+        logger.propagate = False
+
+    return logger
+
+
+# Module-level logger
+logger: logging.Logger = setup_logger()

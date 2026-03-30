@@ -13,7 +13,7 @@ from typing import List, Type, TypeVar, Dict, Any
 from .api_client import ApiClient
 from .entities import GeoEntity
 
-logger = logging.getLogger(__name__)
+from ..logging_config import logger
 
 T = TypeVar("T", bound=GeoEntity)
 

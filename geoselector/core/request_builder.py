@@ -17,7 +17,7 @@ import json
 from pathlib import Path
 from typing import Callable, Mapping, Any, Dict
 
-logger = logging.getLogger(__name__)
+from ..logging_config import logger
 
 
 def load_api_config(path: str = "config/apis.json") -> Dict[str, Any]:

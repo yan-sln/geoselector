@@ -18,7 +18,7 @@ from typing import Any, Dict, List, Optional, cast
 
 from .request_builder import get_request_builder
 
-logger = logging.getLogger(__name__)
+from ..logging_config import logger
 
 
 class ApiError(RuntimeError):
