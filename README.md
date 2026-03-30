@@ -88,8 +88,11 @@ Add or modify entries to match your data source. The framework will automaticall
 
 ## Core Components
 
-| Component | Description | Key File |
-|-----------|-------------|----------|
+### Limit support
+
+The selector methods `select` and the service methods `search_by_name`, `search_by_code` of `commune` now accept an optional `limit` keyword argument. The value is forwarded to the underlying WFS request as the `COUNT` query parameter, allowing you to restrict the number of returned features (e.g., `selector.select("Bretagne", limit=5)`).
+
+
 | **API Client** | Low‑level HTTP wrapper that loads the JSON config and performs GET/POST calls. Handles retries and basic error mapping. | [`geoselector/core/api_client.py`](geoselector/core/api_client.py) |
 | **Selector** | High‑level façade exposing `select` and `get_geometry` methods for a given entity class. Utilises caching for repeated queries. | [`geoselector/core/selector.py`](geoselector/core/selector.py) |
 | **Operation Selector** | Maps entity operations (search, fetch geometry) to concrete request templates. | [`geoselector/core/operation_selector.py`](geoselector/core/operation_selector.py) |
