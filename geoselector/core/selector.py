@@ -106,7 +106,7 @@ class SelectorImpl:
         # Determine the operation using the selector.
         operation = OperationSelector.choose(args, cfg)
         # Log the selection details for debugging and audit purposes.
-        logger.info(
+        logger.debug(
             "SelectorImpl.select called – entity=%s, args=%s, kwargs=%s, chosen_operation=%s",
             self.entity_cls.__name__,
             args,

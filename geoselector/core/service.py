@@ -123,7 +123,7 @@ class GeoService:
         """
         entity_key = self._entity_key(entity_cls)
         # Log the incoming filters and the entity being searched.
-        logger.info(
+        logger.debug(
             "GeoService.list_search – entity=%s, received_filters=%s",
             entity_key,
             filters,
@@ -131,7 +131,7 @@ class GeoService:
         raw = self.client.search(entity_key, "list_search", **filters)
         results = self._instantiate(entity_cls, raw)
         # Log the number of results obtained.
-        logger.info(
+        logger.debug(
             "GeoService.list_search – entity=%s, returned_count=%d",
             entity_key,
             len(results),
