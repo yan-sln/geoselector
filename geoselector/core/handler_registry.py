@@ -79,6 +79,13 @@ class HandlerRegistry:
 
         def handler(selector: Any, filters: Dict[str, Any]) -> List[Any]:
             entity_key = selector.service._entity_key(selector.entity_cls)
+            # Log the handler invocation details.
+            logger.info(
+                "Handler invoked – entity_key=%s, operation=%s, filters=%s",
+                entity_key,
+                operation,
+                filters,
+            )
             raw = service.client.search(entity_key, operation, **filters)
             return service._instantiate(selector.entity_cls, raw)
 

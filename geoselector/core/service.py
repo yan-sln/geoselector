@@ -122,8 +122,21 @@ class GeoService:
         placeholders defined in the ``CQL_FILTER`` of the configuration.
         """
         entity_key = self._entity_key(entity_cls)
+        # Log the incoming filters and the entity being searched.
+        logger.info(
+            "GeoService.list_search – entity=%s, received_filters=%s",
+            entity_key,
+            filters,
+        )
         raw = self.client.search(entity_key, "list_search", **filters)
-        return self._instantiate(entity_cls, raw)
+        results = self._instantiate(entity_cls, raw)
+        # Log the number of results obtained.
+        logger.info(
+            "GeoService.list_search – entity=%s, returned_count=%d",
+            entity_key,
+            len(results),
+        )
+        return results
 
     # Search helpers
     # ---------------------------------------------------------------------
