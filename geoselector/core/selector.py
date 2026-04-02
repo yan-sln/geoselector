@@ -18,6 +18,7 @@ from .service import GeoService
 from .api_client import ApiClient
 from .operation_selector import OperationSelector
 from .handler_registry import HandlerRegistry
+from .cache import ttl_lru_cache
 
 from ..logging_config import logger
 
@@ -89,6 +90,7 @@ class SelectorImpl:
         self.entity_cls = entity_cls
         self.service = service
 
+    @ttl_lru_cache(maxsize=256, ttl=300)
     def select(self, *args: Any, **kwargs: Any) -> List[GeoEntity]:
         """Dispatch a search request using the ``HandlerRegistry``.
 

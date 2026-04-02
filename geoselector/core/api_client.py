@@ -163,9 +163,22 @@ class ApiClient:
                 data: Dict[str, Any] = json.loads(raw)
                 logger.info("Successful GET request to %s", url)
                 return data
+        except urllib.error.HTTPError as http_err:
+            error_msg = f"HTTP error {http_err.code}: {http_err.reason} when fetching {url}"
+            logger.error(error_msg)
+            raise ApiError(error_msg, url) from http_err
+        except urllib.error.URLError as url_err:
+            error_msg = f"URL error: {url_err.reason} when fetching {url}"
+            logger.error(error_msg)
+            raise ApiError(error_msg, url) from url_err
+        except json.JSONDecodeError as json_err:
+            error_msg = f"JSON decode error: {json_err.msg} when fetching {url}"
+            logger.error(error_msg)
+            raise ApiError(error_msg, url) from json_err
         except Exception as exc:
-            logger.error("Error fetching %s: %s", url, exc)
-            raise ApiError(str(exc), url) from exc
+            error_msg = f"Unexpected error fetching {url}: {exc}"
+            logger.error(error_msg)
+            raise ApiError(error_msg, url) from exc
 
     # ---------------------------------------------------------------------
     # Public API
