@@ -21,21 +21,9 @@ from .request_builder import get_request_builder
 from ..logging_config import logger
 
 
-class ApiError(RuntimeError):
-    """Custom exception for API‑related errors."""
-
-    def __init__(self, message: str, url: str | None = None):
-        """Initialize the ApiError with an error message and optional URL.
-
-        Parameters
-        ----------
-        message: str
-            Human‑readable error description.
-        url: str | None, optional
-            The request URL that caused the error, if applicable.
-        """
-        super().__init__(message)
-        self.url = url
+# Les exceptions ApiError sont maintenant définies dans entities.py
+# Cette importation est conservée pour compatibilité mais ne sera plus utilisée
+# Les classes spécifiques seront importées depuis entities.py
 
 
 class ApiClient:

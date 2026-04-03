@@ -31,7 +31,9 @@ pyproject.toml
 requirements.txt
 ```
 
+
 ## What `geoselector` Offers
+## Error Handling
 
 - **Generic API client** – [`geoselector/core/api_client.py`](geoselector/core/api_client.py) reads a JSON configuration file ([`geoselector/config/apis.json`](geoselector/config/apis.json)) that describes any WFS‑like service (endpoints, parameters).
 - **Selector** – [`geoselector/core/selector.py`](geoselector/core/selector.py) builds requests for a given entity class, applies an LRU cache (`functools.lru_cache`), and returns raw JSON structures.
@@ -92,6 +94,24 @@ Add or modify entries to match your data source. The framework will automaticall
 
 The selector methods `select` and the service methods `search_by_name`, `search_by_code` of `commune` now accept an optional `limit` keyword argument. The value is forwarded to the underlying WFS request as the `COUNT` query parameter, allowing you to restrict the number of returned features (e.g., `selector.select("Bretagne", limit=5)`).
 
+### Error Handling
+
+`geoselector` implements a comprehensive exception hierarchy built upon `ApiError`:
+
+#### Exception Classes
+- `ApiError` - Base exception for API-related errors
+- `NetworkError` - Network-related errors (retryable)
+- `ValidationError` - Data validation errors (non-retryable)
+- `ServiceError` - Service availability errors (retryable)
+- `TimeoutError` - Request timeout errors (retryable)
+
+#### Features
+- **User-friendly messages** - Automatic translation of technical errors into clear messages
+- **Retry mechanisms** - Built-in retry logic with exponential backoff for retryable errors
+- **Error categorization** - Each exception type has specific properties for appropriate handling
+- **Context information** - Errors include URL context and classification codes
+
+All exceptions are defined in `geoselector/core/exceptions.py` for better organization and maintainability.
 
 | **API Client** | Low‑level HTTP wrapper that loads the JSON config and performs GET/POST calls. Handles retries and basic error mapping. | [`geoselector/core/api_client.py`](geoselector/core/api_client.py) |
 | **Selector** | High‑level façade exposing `select` and `get_geometry` methods for a given entity class. Utilises caching for repeated queries. | [`geoselector/core/selector.py`](geoselector/core/selector.py) |

@@ -19,6 +19,7 @@ from .api_client import ApiClient
 from .operation_selector import OperationSelector
 from .handler_registry import HandlerRegistry
 from .cache import ttl_lru_cache
+from .exceptions import ApiError
 
 from ..logging_config import logger
 
@@ -129,7 +130,14 @@ class SelectorImpl:
         # Forward any additional keyword arguments (e.g., limit) to the client.
         if kwargs:
             filters.update(kwargs)
-        return handler(self, filters)
+
+        try:
+            return handler(self, filters)
+        except ApiError as e:
+            # Translate to user-friendly message
+            user_message = e.to_user_friendly_message()
+            logger.error(f"Error during selection: {user_message}")
+            raise ApiError(user_message)
 
     def get_geometry(self, *args: Any, **kwargs: Any) -> Optional[Dict[str, Any]]:
         """Retrieve geometry for the entity.
@@ -140,7 +148,7 @@ class SelectorImpl:
         * Multiple args map to placeholders via ``_build_filter``.
         """
         logger.debug(
-            "SelectorImpl.get_geometry called for %s " "with args=%s kwargs=%s",
+            "SelectorImpl.get_geometry called for %s with args=%s kwargs=%s",
             self.entity_cls.__name__,
             args,
             kwargs,
@@ -153,11 +161,21 @@ class SelectorImpl:
         geometry_cfg: Dict[str, Any] = entity_cfg.get("geometry", {})
         # If a dict is passed as the first positional argument, forward it.
         if args and isinstance(args[0], dict):
-            return self.service.client.fetch_geometry(entity_key, **args[0])
+            try:
+                return self.service.client.fetch_geometry(entity_key, **args[0])
+            except ApiError as e:
+                user_message = e.to_user_friendly_message()
+                logger.error(f"Error fetching geometry with dict: {user_message}")
+                return None
 
         # If keyword arguments are provided, treat them as filters.
         if kwargs:
-            return self.service.client.fetch_geometry(entity_key, **kwargs)
+            try:
+                return self.service.client.fetch_geometry(entity_key, **kwargs)
+            except ApiError as e:
+                user_message = e.to_user_friendly_message()
+                logger.error(f"Error fetching geometry with kwargs: {user_message}")
+                return None
 
         # Ensure at least one positional argument.
         if not args:
@@ -171,15 +189,32 @@ class SelectorImpl:
             and isinstance(identifier, str)
             and "." in identifier
         ):
-            return self.service.client.fetch_geometry(entity_key, featureId=identifier)
+            try:
+                return self.service.client.fetch_geometry(
+                    entity_key, featureId=identifier
+                )
+            except ApiError as e:
+                user_message = e.to_user_friendly_message()
+                logger.error(f"Error fetching geometry with featureId: {user_message}")
+                return None
 
         # No featureId required – if multiple args, build filters and fetch.
         if len(args) > 1:
             filters = _build_filter(geometry_cfg, args)
-            return self.service.client.fetch_geometry(entity_key, **filters)
+            try:
+                return self.service.client.fetch_geometry(entity_key, **filters)
+            except ApiError as e:
+                user_message = e.to_user_friendly_message()
+                logger.error(f"Error fetching geometry with filters: {user_message}")
+                return None
 
         # Fallback to service helper for simple code lookup.
-        return self.service.fetch_entity_geometry(self.entity_cls, identifier)
+        try:
+            return self.service.fetch_entity_geometry(self.entity_cls, identifier)
+        except ApiError as e:
+            user_message = e.to_user_friendly_message()
+            logger.error(f"Error fetching geometry with fallback: {user_message}")
+            return None
 
 
 class SelectorFactory:
