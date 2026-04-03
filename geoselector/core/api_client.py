@@ -74,6 +74,18 @@ class ApiClient:
     # ---------------------------------------------------------------------
     # URL construction helpers
     # ---------------------------------------------------------------------
+    def _escape_sql_value(self, value: str) -> str:
+        """Escape a string value for use in SQL/CQL queries.
+
+        This prevents injection attacks and handles special characters like
+        apostrophes by doubling them, which is the standard approach for SQL.
+        """
+        if not isinstance(value, str):
+            return str(value)
+        # Double apostrophes to escape them in SQL/CQL
+        escaped = value.replace("'", "''")
+        return escaped
+
     def _build_url(self, entity: str, operation: str, **values: Any) -> str:
         """Construct a full request URL for *entity* and *operation*.
 
@@ -100,7 +112,12 @@ class ApiClient:
         # Replace placeholders in the CQL filter.
         cql: Optional[str] = None
         if isinstance(cql_template, str):
-            cql = cql_template.format(**values)
+            # Escape values before formatting to prevent SQL injection
+            escaped_values = {
+                k: str(v).replace("'", "''") if isinstance(v, str) else v
+                for k, v in values.items()
+            }
+            cql = cql_template.format(**escaped_values)
         elif cql_template is None:
             cql = None
         else:
@@ -164,7 +181,9 @@ class ApiClient:
                 logger.info("Successful GET request to %s", url)
                 return data
         except urllib.error.HTTPError as http_err:
-            error_msg = f"HTTP error {http_err.code}: {http_err.reason} when fetching {url}"
+            error_msg = (
+                f"HTTP error {http_err.code}: {http_err.reason} when fetching {url}"
+            )
             logger.error(error_msg)
             raise ApiError(error_msg, url) from http_err
         except urllib.error.URLError as url_err:
