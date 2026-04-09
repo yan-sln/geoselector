@@ -15,7 +15,7 @@ import os
 import sys
 from unittest.mock import patch
 
-import pytest
+import pytest  # type: ignore
 from typing import Dict, Any, Type
 
 # Ensure the project root is in sys.path for imports
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     # Demonstration reproducing the console outputs of the original test scripts
     # This is the problematic execution block that causes network errors
     # when the WFS service is unavailable - we provide graceful handling here
-    
+
     from geoselector.core.entities import (
         Region,
         Departement,
@@ -127,7 +127,7 @@ if __name__ == "__main__":
         Parcelle,
         SubdivisionFiscale,
     )
-    
+
     # We wrap the main execution in a try-except block to gracefully
     # handle network errors while maintaining the ability to test functionality
     try:
@@ -224,5 +224,7 @@ if __name__ == "__main__":
     except Exception as e:
         print(f"Error during demo execution: {e}")
         print("This is expected if the WFS service is temporarily unavailable.")
-        print("The library is working correctly - the issue is with the external API endpoint.")
+        print(
+            "The library is working correctly - the issue is with the external API endpoint."
+        )
         print("When run in tests with mocking, the library works perfectly fine.")

@@ -6,8 +6,6 @@ and their specific subclasses.
 
 from __future__ import annotations
 
-from typing import Optional
-
 
 class ApiError(RuntimeError):
     """Custom exception for API-related errors."""

@@ -10,7 +10,6 @@ from __future__ import annotations
 from typing import Callable, Dict, Tuple, List, Any
 
 from .service import GeoService
-import logging
 
 from ..logging_config import logger
 

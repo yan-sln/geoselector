@@ -9,7 +9,6 @@ import threading
 from functools import lru_cache, wraps
 from typing import Any, Callable, TypeVar, Dict, Tuple
 
-
 T = TypeVar("T")
 
 
@@ -32,18 +31,18 @@ def ttl_lru_cache(maxsize: int = 128, ttl: int = 300):
     callable
         Decorator function that applies the TTL-aware LRU cache
     """
-    
+
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         # Create a thread-safe LRU cache
         cached_func = lru_cache(maxsize=maxsize)(func)
         cache_data: Dict[Tuple, Tuple[Any, float]] = {}  # key -> (value, timestamp)
         cache_lock = threading.Lock()
-        
+
         @wraps(func)
         def wrapper(*args: Any, **kwargs: Any) -> T:
             # Create a hashable key from arguments
             key = _make_key(args, kwargs)
-            
+
             with cache_lock:
                 # Check if cache entry exists and is still valid
                 if key in cache_data:
@@ -56,36 +55,37 @@ def ttl_lru_cache(maxsize: int = 128, ttl: int = 300):
                     else:
                         # Cache expired - remove entry
                         del cache_data[key]
-            
+
             # Cache miss - call original function
             result = func(*args, **kwargs)
-            
+
             # Store result in cache and timestamp
             with cache_lock:
                 cache_data[key] = (result, time.time())
-            
+
             return result
-        
+
         # Expose cache clearing functionality
         def cache_clear():
             cached_func.cache_clear()
             with cache_lock:
                 cache_data.clear()
-        
-        wrapper.cache_clear = cache_clear
-        
+
+        # Assign cache_clear to the wrapper function
+        setattr(wrapper, "cache_clear", cache_clear)
+
         return wrapper
-    
+
     return decorator
 
 
 def _make_key(args: tuple, kwargs: dict) -> tuple:
     """Create a hashable cache key from function arguments.
-    
+
     Args:
         args: Positional arguments
         kwargs: Keyword arguments
-        
+
     Returns:
         Hashable tuple representing the arguments
     """

@@ -7,14 +7,13 @@ using :class:`core.api_client.ApiClient` and the entity classes defined in
 
 from __future__ import annotations
 
-import logging
 import time
 import random
 from typing import List, Type, TypeVar, Dict, Any
 
 from .api_client import ApiClient
 from .entities import GeoEntity
-from .exceptions import ApiError, NetworkError, ServiceError, TimeoutError
+from .exceptions import ApiError
 
 from ..logging_config import logger
 
@@ -79,29 +78,29 @@ class GeoService:
         jitter: bool = True,
     ):
         """Retry mechanism with exponential backoff."""
-        last_exception = None
 
-        for attempt in range(max_retries + 1):
+        for attempt in range(max_retries):
             try:
                 return func()
             except ApiError as e:
-                last_exception = e
-
-                # Don't retry if not retryable or if it's the last attempt
-                if not e.retryable or attempt >= max_retries:
+                if not e.retryable:
                     raise
 
-                # Calculate delay with exponential backoff
                 delay = base_delay * (backoff_multiplier**attempt)
+
                 if jitter:
                     delay *= random.uniform(0.5, 1.5)
 
+                delay = min(delay, 60)
+
                 logger.warning(
-                    f"Attempt {attempt + 1} failed for {func.__name__}: {e}. Retrying in {delay:.2f}s..."
+                    f"Attempt {attempt + 1} failed for {getattr(func, '__name__', repr(func))}: {e}. Retrying in {delay:.2f}s..."
                 )
+
                 time.sleep(delay)
 
-        raise last_exception
+        # Last try
+        return func()
 
     # ---------------------------------------------------------------------
     # Search helpers – explicit modes
@@ -173,12 +172,6 @@ class GeoService:
                 )
                 raw = []
             return self._instantiate(entity_cls, raw)
-
-        try:
-            return self._retry_with_backoff(_do_list, max_retries=2)
-        except ApiError as e:
-            logger.error(f"List entities failed for {entity_key}: {e}")
-            raise
 
         try:
             return self._retry_with_backoff(_do_list, max_retries=2)

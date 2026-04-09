@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 from typing import Final
 
-from qgis.core import Qgis, QgsMessageLog
+from qgis.core import Qgis, QgsMessageLog  # type: ignore
 
 # Public logger name (used across the plugin)
 LOGGER_NAME: Final[str] = "geoselector"
@@ -40,10 +40,10 @@ class QgisLogHandler(logging.Handler):
     def _map_level(levelno: int) -> Qgis.MessageLevel:
         """Map Python logging levels to QGIS levels."""
         if levelno >= logging.ERROR:
-            return Qgis.Critical
+            return Qgis.MessageLevel.Critical
         if levelno >= logging.WARNING:
-            return Qgis.Warning
-        return Qgis.Info
+            return Qgis.MessageLevel.Warning
+        return Qgis.MessageLevel.Info
 
 
 def setup_logger() -> logging.Logger:

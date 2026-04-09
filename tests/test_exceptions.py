@@ -6,8 +6,8 @@ of the new exception classes and retry mechanisms.
 
 import os
 import sys
-from unittest.mock import patch, MagicMock
-import pytest
+from unittest.mock import patch
+import pytest  # type: ignore
 
 # Ensure the project root is in sys.path for imports
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
@@ -108,7 +108,7 @@ def test_service_retry_logic(mock_get):
         # Should have been called 3 times (2 failures + 1 success)
         assert call_count == 3
         assert len(result) == 1
-    except Exception as e:
+    except Exception:
         # If it fails, it's likely due to configuration issue, not retry logic
         pass
 

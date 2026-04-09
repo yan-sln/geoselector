@@ -9,14 +9,15 @@ GET requests and expose high‑level ``search`` and ``fetch_geometry`` helpers.
 from __future__ import annotations
 
 import json
-import logging
 import urllib.parse
 import urllib.request
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 
+from urllib.error import HTTPError, URLError
 from .request_builder import get_request_builder
+from .exceptions import ApiError
 
 from ..logging_config import logger
 
@@ -168,13 +169,13 @@ class ApiClient:
                 data: Dict[str, Any] = json.loads(raw)
                 logger.info("Successful GET request to %s", url)
                 return data
-        except urllib.error.HTTPError as http_err:
+        except HTTPError as http_err:
             error_msg = (
                 f"HTTP error {http_err.code}: {http_err.reason} when fetching {url}"
             )
             logger.error(error_msg)
             raise ApiError(error_msg, url) from http_err
-        except urllib.error.URLError as url_err:
+        except URLError as url_err:
             error_msg = f"URL error: {url_err.reason} when fetching {url}"
             logger.error(error_msg)
             raise ApiError(error_msg, url) from url_err

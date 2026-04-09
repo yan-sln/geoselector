@@ -11,13 +11,10 @@ The goal is to decouple the construction of request parameters from the
 """
 
 from __future__ import annotations
-import logging
 
 import json
 from pathlib import Path
 from typing import Callable, Mapping, Any, Dict
-
-from ..logging_config import logger
 
 
 def load_api_config(path: str = "config/apis.json") -> Dict[str, Any]:

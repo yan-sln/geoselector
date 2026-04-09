@@ -9,9 +9,6 @@ touching the selector implementation.
 from __future__ import annotations
 
 from typing import Any, Tuple
-import logging
-
-from ..logging_config import logger
 
 
 class OperationSelector:
