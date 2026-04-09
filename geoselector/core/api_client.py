@@ -154,6 +154,18 @@ class ApiClient:
     # ---------------------------------------------------------------------
     # HTTP helpers
     # ---------------------------------------------------------------------
+    def _handle_http_error(self, http_err: HTTPError, url: str) -> ApiError:
+        """Handle HTTPError and convert it to ApiError."""
+        error_msg = f"HTTP error {http_err.code}: {http_err.reason} when fetching {url}"
+        logger.error(error_msg)
+        return ApiError(error_msg, url)
+
+    def _handle_url_error(self, url_err: URLError, url: str) -> ApiError:
+        """Handle URLError and convert it to ApiError."""
+        error_msg = f"URL error: {url_err.reason} when fetching {url}"
+        logger.error(error_msg)
+        return ApiError(error_msg, url)
+
     @lru_cache(maxsize=256)
     def _cached_get(self, url: str) -> Dict[str, Any]:
         """Perform a GET request and return the parsed JSON response.
@@ -170,15 +182,9 @@ class ApiClient:
                 logger.info("Successful GET request to %s", url)
                 return data
         except HTTPError as http_err:
-            error_msg = (
-                f"HTTP error {http_err.code}: {http_err.reason} when fetching {url}"
-            )
-            logger.error(error_msg)
-            raise ApiError(error_msg, url) from http_err
+            raise self._handle_http_error(http_err, url)
         except URLError as url_err:
-            error_msg = f"URL error: {url_err.reason} when fetching {url}"
-            logger.error(error_msg)
-            raise ApiError(error_msg, url) from url_err
+            raise self._handle_url_error(url_err, url)
         except json.JSONDecodeError as json_err:
             error_msg = f"JSON decode error: {json_err.msg} when fetching {url}"
             logger.error(error_msg)
