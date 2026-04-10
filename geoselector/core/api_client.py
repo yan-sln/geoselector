@@ -167,12 +167,11 @@ class ApiClient:
         logger.error(error_msg)
         return ApiError(error_msg, url)
 
-    @lru_cache(maxsize=256)
     def _cached_get(self, url: str) -> Dict[str, Any]:
         """Perform a GET request and return the parsed JSON response.
 
-        The result is cached using ``functools.lru_cache`` to avoid repeated
-        network calls for identical URLs.
+        This method handles HTTP requests and error conversion. Caching is handled
+        at a higher level in the calling code.
         """
         logger.debug("Fetching URL: %s", url)
         try:
