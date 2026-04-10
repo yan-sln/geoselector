@@ -225,18 +225,25 @@ class Parcelle(GeoEntity):
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "Parcelle":
+        # For Parcelle, we use raw['id'] for feature_id (as requested)
+        feature_id = raw.get("id")
+
+        # Validate that feature_id was extracted properly
+        if not feature_id:
+            raise InvalidParameterFormat(
+                "feature_id",
+                "non-empty string",
+                str(feature_id) if feature_id is not None else "None",
+            )
+
+        # Direct instantiation - simple and clean
         props = raw.get("properties", {})
-        feature_id = raw.get("id") or props.get("feature_id")
-        return cls._validate_and_create_entity(
-            raw,
-            required_fields=["feature_id", "code_insee", "section"],
-            field_mapping={
-                "feature_id": "feature_id",
-                "code_insee": "code_insee",
-                "section": "section",
-                "numero": "numero",
-                "idu": "idu",
-            },
+        return cls(
+            feature_id=feature_id,
+            code_insee=props.get("code_insee"),
+            section=props.get("section"),
+            numero=props.get("numero"),
+            idu=props.get("idu"),
         )
 
 
