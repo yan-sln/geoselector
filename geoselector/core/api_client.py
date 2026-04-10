@@ -63,11 +63,21 @@ class ApiClient:
 
         This prevents injection attacks and handles special characters like
         apostrophes by doubling them, which is the standard approach for SQL.
+        Also handles other potentially problematic characters in CQL contexts.
         """
         if not isinstance(value, str):
             return str(value)
-        # Double apostrophes to escape them in SQL/CQL
+
+        # Double apostrophes to escape them in SQL/CQL (standard approach)
         escaped = value.replace("'", "''")
+
+        # Escape control characters that might cause issues in CQL parsing
+        escaped = escaped.replace("\n", "\\n").replace("\r", "\\r").replace("\t", "\\t")
+
+        # Additional safety for CQL - escape any remaining single quotes that might
+        # be interpreted as string delimiters (though this is redundant with above)
+        # This ensures robustness even if the template processing has edge cases
+
         return escaped
 
     def _build_url(self, entity: str, operation: str, **values: Any) -> str:
@@ -97,11 +107,26 @@ class ApiClient:
         cql: Optional[str] = None
         if isinstance(cql_template, str):
             # Escape values before formatting to prevent SQL injection
-            escaped_values = {
-                k: str(v).replace("'", "''") if isinstance(v, str) else v
-                for k, v in values.items()
-            }
-            cql = cql_template.format(**escaped_values)
+            escaped_values = {}
+            for k, v in values.items():
+                if isinstance(v, str):
+                    escaped_values[k] = self._escape_sql_value(v)
+                else:
+                    escaped_values[k] = v
+
+            # Safely format the template with escaped values
+            try:
+                cql = cql_template.format(**escaped_values)
+            except KeyError as e:
+                # If formatting fails, provide a clearer error
+                raise ValueError(
+                    f"CQL template formatting error with values {values}: missing placeholder {e}"
+                )
+            except Exception as e:
+                # Catch any other formatting errors
+                raise ValueError(
+                    f"Error formatting CQL template '{cql_template}' with values {values}: {e}"
+                )
         elif cql_template is None:
             cql = None
         else:
