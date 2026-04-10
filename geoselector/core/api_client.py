@@ -14,10 +14,11 @@ import urllib.request
 from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
+import socket
 
 from urllib.error import HTTPError, URLError
 from .request_builder import get_request_builder
-from .exceptions import ApiError
+from .exceptions import ApiError, TimeoutError
 
 from ..logging_config import logger
 
@@ -181,6 +182,11 @@ class ApiClient:
                 data: Dict[str, Any] = json.loads(raw)
                 logger.info("Successful GET request to %s", url)
                 return data
+        except socket.timeout:
+            # Handle socket timeout specifically and convert to TimeoutError
+            error_msg = f"Request timeout when fetching {url}"
+            logger.error(error_msg)
+            raise TimeoutError(error_msg, url)
         except HTTPError as http_err:
             raise self._handle_http_error(http_err, url)
         except URLError as url_err:

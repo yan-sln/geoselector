@@ -93,9 +93,15 @@ class GeoService:
 
                 delay = min(delay, 60)
 
-                logger.warning(
-                    f"Attempt {attempt + 1} failed for {getattr(func, '__name__', repr(func))}: {e}. Retrying in {delay:.2f}s..."
-                )
+                # Log specific information about timeout errors
+                if hasattr(e, "error_code") and e.error_code == "TIMEOUT_ERROR":
+                    logger.warning(
+                        f"Attempt {attempt + 1} failed for {getattr(func, '__name__', repr(func))}: Timeout occurred. Retrying in {delay:.2f}s..."
+                    )
+                else:
+                    logger.warning(
+                        f"Attempt {attempt + 1} failed for {getattr(func, '__name__', repr(func))}: {e}. Retrying in {delay:.2f}s..."
+                    )
 
                 time.sleep(delay)
 
