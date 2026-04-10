@@ -53,6 +53,12 @@ class ApiError(RuntimeError):
             return "Une erreur s'est produite. Veuillez réessayer."
 
 
+class SelectorArgumentError(ValueError):
+    """Exception raised when selector methods receive invalid or insufficient arguments."""
+
+    pass
+
+
 class NetworkError(ApiError):
     """Exception for network-related errors that can be retried."""
 

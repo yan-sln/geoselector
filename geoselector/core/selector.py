@@ -18,7 +18,7 @@ from .api_client import ApiClient
 from .operation_selector import OperationSelector
 from .handler_registry import HandlerRegistry
 from .cache import ttl_lru_cache
-from .exceptions import ApiError
+from .exceptions import ApiError, SelectorArgumentError
 
 from ..logging_config import logger
 
@@ -99,7 +99,7 @@ class SelectorImpl:
         configuration; missing handlers raise a clear ``NotImplementedError``.
         """
         if not args:
-            raise ValueError("select() requires at least one argument")
+            raise SelectorArgumentError("select() requires at least one argument")
 
         # Resolve entity configuration.
         entity_key = self.service._entity_key(self.entity_cls)
