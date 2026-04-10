@@ -18,7 +18,11 @@ from .api_client import ApiClient
 from .operation_selector import OperationSelector
 from .handler_registry import HandlerRegistry
 from .cache import ttl_lru_cache
-from .exceptions import ApiError, SelectorArgumentError
+from .exceptions import (
+    ApiError,
+    SelectorArgumentError,
+    InsufficientParameters,
+)
 
 from ..logging_config import logger
 
@@ -72,9 +76,28 @@ def _build_filter(
         return filters
 
     # Case 3: positional arguments – map in order
+    # Validate that we have enough arguments
+    if len(args) < len(placeholders):
+        # Create a list of required placeholders that are missing
+        missing_placeholders = []
+        for i, ph in enumerate(placeholders):
+            if i >= len(args):
+                missing_placeholders.append(ph)
+
+        if missing_placeholders:
+            # Try to infer entity and operation from the context
+            # We can't determine this from here, so raise a generic exception
+            raise InsufficientParameters(
+                "unknown", "unknown", len(placeholders), len(args)
+            )
+
     filters = {}
     for i, ph in enumerate(placeholders):
-        filters[ph] = args[i] if i < len(args) else ""
+        if i < len(args):
+            filters[ph] = args[i]
+        else:
+            # This shouldn't happen due to the check above, but just in case
+            filters[ph] = ""
     return filters
 
 

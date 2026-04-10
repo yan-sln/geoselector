@@ -11,7 +11,6 @@ from __future__ import annotations
 import json
 import urllib.parse
 import urllib.request
-from functools import lru_cache
 from pathlib import Path
 from typing import Any, Dict, List, Optional, cast
 import socket
@@ -21,11 +20,6 @@ from .request_builder import get_request_builder
 from .exceptions import ApiError, TimeoutError
 
 from ..logging_config import logger
-
-
-# Les exceptions ApiError sont maintenant définies dans entities.py
-# Cette importation est conservée pour compatibilité mais ne sera plus utilisée
-# Les classes spécifiques seront importées depuis entities.py
 
 
 class ApiClient:

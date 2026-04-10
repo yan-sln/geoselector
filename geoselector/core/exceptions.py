@@ -53,6 +53,50 @@ class ApiError(RuntimeError):
             return "Une erreur s'est produite. Veuillez réessayer."
 
 
+class InvalidSearchParameters(ValueError):
+    """Exception raised when search parameters are invalid or insufficient."""
+
+    pass
+
+
+class MissingRequiredParameter(InvalidSearchParameters):
+    """Exception raised when a required parameter for a search operation is missing."""
+
+    def __init__(self, parameter_name: str, operation: str, entity: str):
+        self.parameter_name = parameter_name
+        self.operation = operation
+        self.entity = entity
+        message = (
+            f"Missing required parameter '{parameter_name}' for {entity}.{operation}"
+        )
+        super().__init__(message)
+
+
+class InvalidParameterFormat(InvalidSearchParameters):
+    """Exception raised when a parameter has invalid format."""
+
+    def __init__(self, parameter_name: str, expected_format: str, actual_value: str):
+        self.parameter_name = parameter_name
+        self.expected_format = expected_format
+        self.actual_value = actual_value
+        message = f"Invalid format for parameter '{parameter_name}': expected {expected_format}, got '{actual_value}'"
+        super().__init__(message)
+
+
+class InsufficientParameters(InvalidSearchParameters):
+    """Exception raised when not enough parameters are provided for an operation."""
+
+    def __init__(
+        self, operation: str, entity: str, required_count: int, provided_count: int
+    ):
+        self.operation = operation
+        self.entity = entity
+        self.required_count = required_count
+        self.provided_count = provided_count
+        message = f"Insufficient parameters for {entity}.{operation}: required {required_count}, provided {provided_count}"
+        super().__init__(message)
+
+
 class SelectorArgumentError(ValueError):
     """Exception raised when selector methods receive invalid or insufficient arguments."""
 

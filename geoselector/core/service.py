@@ -13,7 +13,7 @@ from typing import List, Type, TypeVar, Dict, Any
 
 from .api_client import ApiClient
 from .entities import GeoEntity
-from .exceptions import ApiError
+from .exceptions import ApiError, MissingRequiredParameter
 
 from ..logging_config import logger
 
@@ -166,6 +166,27 @@ class GeoService:
         """
         entity_key = self._entity_key(entity_cls)
 
+        # Get the configuration for the search operation to check required placeholders
+        entity_cfg = self.client.config.get("entities", {}).get(entity_key, {})
+        search_cfg = entity_cfg.get("search", {})
+        cql_filter = search_cfg.get("CQL_FILTER", "")
+
+        # Extract required placeholders from the CQL_FILTER to validate parameters
+        import re
+
+        placeholders = re.findall(r"{(\w+)}", cql_filter)
+
+        # Check if all required placeholders are provided
+        missing_placeholders = []
+        for placeholder in placeholders:
+            if placeholder not in filters:
+                missing_placeholders.append(placeholder)
+
+        if missing_placeholders:
+            raise MissingRequiredParameter(
+                missing_placeholders[0], "search", entity_key
+            )
+
         def _do_list():
             try:
                 raw = self.client.search(entity_key, "search", **filters)
@@ -200,6 +221,27 @@ class GeoService:
             entity_key,
             filters,
         )
+
+        # Get the configuration for the list_search operation to check required placeholders
+        entity_cfg = self.client.config.get("entities", {}).get(entity_key, {})
+        list_search_cfg = entity_cfg.get("list_search", {})
+        cql_filter = list_search_cfg.get("CQL_FILTER", "")
+
+        # Extract required placeholders from the CQL_FILTER to validate parameters
+        import re
+
+        placeholders = re.findall(r"{(\w+)}", cql_filter)
+
+        # Check if all required placeholders are provided
+        missing_placeholders = []
+        for placeholder in placeholders:
+            if placeholder not in filters:
+                missing_placeholders.append(placeholder)
+
+        if missing_placeholders:
+            raise MissingRequiredParameter(
+                missing_placeholders[0], "list_search", entity_key
+            )
 
         def _do_list_search():
             raw = self.client.search(entity_key, "list_search", **filters)

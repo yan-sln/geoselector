@@ -15,11 +15,13 @@ import abc
 from dataclasses import dataclass
 from typing import Any, Dict, Optional, Type, TypeVar
 
+# Import the new exception for validation
+from .exceptions import InvalidParameterFormat
+
 # Forward declaration for type hinting.
 Self = TypeVar("Self", bound="GeoEntity")
 
 
-# flake8: noqa
 class GeoEntity(abc.ABC):
     """Base class for all geographical entities.
 
@@ -59,6 +61,32 @@ class GeoEntity(abc.ABC):
         """Create an instance from a raw feature dictionary returned by the API."""
         raise NotImplementedError
 
+    @classmethod
+    def _validate_and_create_entity(
+        cls: Type[Self],
+        raw: Dict[str, Any],
+        required_fields: list[str],
+        field_mapping: dict[str, str],
+    ) -> Self:
+        """Validate required fields and create entity instance."""
+        props = raw.get("properties", {})
+
+        # Validate required fields
+        for field in required_fields:
+            if field not in props or not props.get(field):
+                raise InvalidParameterFormat(
+                    field,
+                    "non-empty string",
+                    str(props.get(field)) if props.get(field) is not None else "None",
+                )
+
+        # Map fields to constructor args
+        kwargs = {}
+        for prop_name, field_name in field_mapping.items():
+            kwargs[prop_name] = props.get(field_name)
+
+        return cls(**kwargs)
+
 
 # Concrete entity definitions -------------------------------------------------
 
@@ -72,8 +100,11 @@ class Region(GeoEntity):
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "Region":
-        props = raw.get("properties", {})
-        return cls(code=props.get("code_insee"), name=props.get("nom_officiel"))
+        return cls._validate_and_create_entity(
+            raw,
+            required_fields=["code_insee"],
+            field_mapping={"code": "code_insee", "name": "nom_officiel"},
+        )
 
 
 @dataclass
@@ -85,8 +116,11 @@ class Departement(GeoEntity):
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "Departement":
-        props = raw.get("properties", {})
-        return cls(code=props.get("code_insee"), name=props.get("nom_officiel"))
+        return cls._validate_and_create_entity(
+            raw,
+            required_fields=["code_insee"],
+            field_mapping={"code": "code_insee", "name": "nom_officiel"},
+        )
 
 
 @dataclass
@@ -98,8 +132,11 @@ class Commune(GeoEntity):
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "Commune":
-        props = raw.get("properties", {})
-        return cls(code=props.get("code_insee"), name=props.get("nom_com"))
+        return cls._validate_and_create_entity(
+            raw,
+            required_fields=["code_insee"],
+            field_mapping={"code": "code_insee", "name": "nom_com"},
+        )
 
 
 @dataclass
@@ -116,11 +153,14 @@ class Arrondissement(GeoEntity):
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "Arrondissement":
-        props = raw.get("properties", {})
-        return cls(
-            code_insee=props.get("code_insee"),
-            name=props.get("nom_arr"),
-            code_arr=props.get("code_arr"),
+        return cls._validate_and_create_entity(
+            raw,
+            required_fields=["code_insee", "code_arr"],
+            field_mapping={
+                "code_insee": "code_insee",
+                "name": "nom_arr",
+                "code_arr": "code_arr",
+            },
         )
 
 
@@ -137,10 +177,10 @@ class Section(GeoEntity):
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "Section":
-        props = raw.get("properties", {})
-        return cls(
-            code_insee=props.get("code_insee"),
-            section=props.get("section"),
+        return cls._validate_and_create_entity(
+            raw,
+            required_fields=["code_insee", "section"],
+            field_mapping={"code_insee": "code_insee", "section": "section"},
         )
 
 
@@ -158,11 +198,14 @@ class Feuille(GeoEntity):
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "Feuille":
-        props = raw.get("properties", {})
-        return cls(
-            code_insee=props.get("code_insee"),
-            section=props.get("section"),
-            feuille=props.get("feuille"),
+        return cls._validate_and_create_entity(
+            raw,
+            required_fields=["code_insee", "section", "feuille"],
+            field_mapping={
+                "code_insee": "code_insee",
+                "section": "section",
+                "feuille": "feuille",
+            },
         )
 
 
@@ -183,12 +226,17 @@ class Parcelle(GeoEntity):
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "Parcelle":
         props = raw.get("properties", {})
-        return cls(
-            feature_id=raw.get("id") or props.get("feature_id"),
-            code_insee=props.get("code_insee"),
-            section=props.get("section"),
-            numero=props.get("numero"),
-            idu=props.get("idu"),
+        feature_id = raw.get("id") or props.get("feature_id")
+        return cls._validate_and_create_entity(
+            raw,
+            required_fields=["feature_id", "code_insee", "section"],
+            field_mapping={
+                "feature_id": "feature_id",
+                "code_insee": "code_insee",
+                "section": "section",
+                "numero": "numero",
+                "idu": "idu",
+            },
         )
 
 
@@ -206,9 +254,12 @@ class SubdivisionFiscale(GeoEntity):
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "SubdivisionFiscale":
-        props = raw.get("properties", {})
-        return cls(
-            gid=props.get("gid"),
-            idu_parcel=props.get("idu_parcel"),
-            lettre=props.get("lettre"),
+        return cls._validate_and_create_entity(
+            raw,
+            required_fields=["gid"],
+            field_mapping={
+                "gid": "gid",
+                "idu_parcel": "idu_parcel",
+                "lettre": "lettre",
+            },
         )
