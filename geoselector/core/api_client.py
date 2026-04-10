@@ -205,15 +205,20 @@ class ApiClient:
             error_msg = f"Request timeout when fetching {url}"
             logger.error(error_msg)
             raise TimeoutError(error_msg, url)
-        except TimeoutError as timeout_err:
-            # Handle TimeoutError specifically (from urllib when connection times out)
-            error_msg = f"Request timeout when fetching {url}"
-            logger.error(error_msg)
-            raise TimeoutError(error_msg, url)
         except HTTPError as http_err:
             raise self._handle_http_error(http_err, url)
         except URLError as url_err:
-            raise self._handle_url_error(url_err, url)
+            # Handle URLError specifically for various network issues
+            error_msg = f"URL error: {url_err.reason} when fetching {url}"
+            logger.error(error_msg)
+            # Check if it's a timeout error by checking the error message
+            if (
+                "timed out" in str(url_err.reason).lower()
+                or "timeout" in str(url_err.reason).lower()
+            ):
+                raise TimeoutError(error_msg, url)
+            else:
+                raise self._handle_url_error(url_err, url)
         except json.JSONDecodeError as json_err:
             error_msg = f"JSON decode error: {json_err.msg} when fetching {url}"
             logger.error(error_msg)
