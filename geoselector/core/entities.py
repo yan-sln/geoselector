@@ -95,7 +95,7 @@ class GeoEntity(abc.ABC):
 # Concrete entity definitions -------------------------------------------------
 
 
-@dataclass
+@dataclass(eq=False)
 class Region(GeoEntity):
     """Geographic region entity."""
 
@@ -111,7 +111,7 @@ class Region(GeoEntity):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class Departement(GeoEntity):
     """Geographic department entity."""
 
@@ -127,7 +127,7 @@ class Departement(GeoEntity):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class Commune(GeoEntity):
     """Geographic commune entity."""
 
@@ -143,7 +143,7 @@ class Commune(GeoEntity):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class Arrondissement(GeoEntity):
     """Geographic arrondissement entity."""
 
@@ -168,7 +168,7 @@ class Arrondissement(GeoEntity):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class Section(GeoEntity):
     """Geographic section entity."""
 
@@ -188,7 +188,7 @@ class Section(GeoEntity):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class Feuille(GeoEntity):
     """Geographic feuille entity."""
 
@@ -213,7 +213,7 @@ class Feuille(GeoEntity):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class Parcelle(GeoEntity):
     """Geographic parcel entity."""
 
@@ -251,7 +251,7 @@ class Parcelle(GeoEntity):
         )
 
 
-@dataclass
+@dataclass(eq=False)
 class SubdivisionFiscale(GeoEntity):
     """Geographic subdivision fiscale entity."""
 
