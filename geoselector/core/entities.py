@@ -55,6 +55,10 @@ class GeoEntity(abc.ABC):
         """Return ``True`` if geometry is already cached."""
         return self._geometry is not None
 
+    def __hash__(self) -> int:
+        """Return hash of the entity based on its code."""
+        return hash(self.code)
+
     @classmethod
     @abc.abstractmethod
     def from_api(cls: Type[Self], raw: Dict[str, Any]) -> Self:
