@@ -203,17 +203,28 @@ class SelectorImpl:
         if not args:
             raise ValueError("get_geometry requires at least one argument")
 
-        identifier = args[0]
+        first_arg = args[0]
+
+        # If an entity instance is supplied, delegate to the service with the object.
+        if isinstance(first_arg, GeoEntity):
+            try:
+                return self.service.fetch_entity_geometry(self.entity_cls, first_arg)
+            except ApiError as e:
+                user_message = e.to_user_friendly_message()
+                logger.error(
+                    f"Error fetching geometry with entity instance: {user_message}"
+                )
+                return None
 
         # If the identifier looks like a featureId, use it.
         if (
             "featureId" in geometry_cfg
-            and isinstance(identifier, str)
-            and "." in identifier
+            and isinstance(first_arg, str)
+            and "." in first_arg
         ):
             try:
                 return self.service.client.fetch_geometry(
-                    entity_key, featureId=identifier
+                    entity_key, featureId=first_arg
                 )
             except ApiError as e:
                 user_message = e.to_user_friendly_message()
@@ -232,7 +243,7 @@ class SelectorImpl:
 
         # Fallback to service helper for simple code lookup.
         try:
-            return self.service.fetch_entity_geometry(self.entity_cls, identifier)
+            return self.service.fetch_entity_geometry(self.entity_cls, first_arg)
         except ApiError as e:
             user_message = e.to_user_friendly_message()
             logger.error(f"Error fetching geometry with fallback: {user_message}")

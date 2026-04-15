@@ -48,7 +48,7 @@ class GeoEntity(abc.ABC):
         if self._service is None:
             return self._geometry
         if force or self._geometry is None:
-            self._geometry = self._service.fetch_entity_geometry(type(self), self.code)
+            self._geometry = self._service.fetch_entity_geometry(type(self), self)
         return self._geometry
 
     def has_geometry(self) -> bool:

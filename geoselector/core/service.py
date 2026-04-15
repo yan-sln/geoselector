@@ -357,12 +357,47 @@ class GeoService:
             placeholders.append("featureId")
 
         # 4⃣ Build the filter dictionary
+        # New calling style – an entity instance may be supplied as the
+        # first positional argument. In that case we extract its public attributes
+        # (those that do not start with an underscore) and use them as the filter
+        # mapping. This covers the case where ``GeoEntity.get_geometry`` passes
+        # ``self`` directly.
         if args and isinstance(args[0], dict) and len(args) == 1:
+            # Caller supplied a ready‑made dict of filters.
             filters = args[0]
+        elif args and isinstance(args[0], GeoEntity):
+            # Caller passed an entity instance; build a filter dict that respects
+            # the placeholder names defined in the configuration. For each placeholder
+            # we first try to get an attribute with the exact name; if that fails we
+            # fall back to a snake_case version of the placeholder (e.g. ``featureId``
+            # → ``feature_id``). Only non‑None values are included.
+            entity_obj = args[0]
+            filters = {}
+            import re
+
+            for ph in placeholders:
+                if hasattr(entity_obj, ph) and getattr(entity_obj, ph) is not None:
+                    filters[ph] = getattr(entity_obj, ph)
+                else:
+                    snake = re.sub(r"(?<!^)(?=[A-Z])", "_", ph).lower()
+                    if (
+                        hasattr(entity_obj, snake)
+                        and getattr(entity_obj, snake) is not None
+                    ):
+                        filters[ph] = getattr(entity_obj, snake)
+            # If for some reason none of the placeholders matched, fallback to any
+            # public, non‑None attributes (maintains backward compatibility).
+            if not filters:
+                filters = {
+                    name: getattr(entity_obj, name)
+                    for name in vars(entity_obj).keys()
+                    if not name.startswith("_")
+                    and getattr(entity_obj, name) is not None
+                }
         elif kwargs:
             filters = kwargs
         else:
-            # Map positional arguments to placeholders in order
+            # Map positional arguments to placeholders in order.
             filters = {}
             for i, ph in enumerate(placeholders):
                 filters[ph] = args[i] if i < len(args) else ""
