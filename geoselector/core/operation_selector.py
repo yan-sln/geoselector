@@ -62,7 +62,7 @@ class OperationSelector:
             if "search_by_name" in cfg and "search_by_code" in cfg:
                 return (
                     "search_by_code"
-                    if text.isdigit() or len(text) <= 3
+                    if text.isdigit()
                     else "search_by_name"
                 )
             if "search_by_code" in cfg:
