@@ -30,13 +30,42 @@ class GeoEntity(abc.ABC):
     via :meth:`get_geometry`.
     """
 
-    code: str
     _geometry: Optional[Dict[str, Any]] = None
-    _service: Optional["GeoService"] = None  # type: ignore  # forward reference
+    _service: Optional["GeoService"] = None  # type: ignore
+
+    # ------------------------
+    # Identity (must be stable)
+    # ------------------------
+
+    @property
+    @abc.abstractmethod
+    def code(self) -> str:
+        """Unique immutable identifier."""
+        raise NotImplementedError
+
+    # ------------------------
+    # Equality & hashing
+    # ------------------------
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, GeoEntity):
+            return NotImplemented
+        return self.code == other.code and type(self) is type(other)
+
+    def __hash__(self) -> int:
+        """Return hash of the entity based on its code."""
+        return hash((type(self), self.code))
+
+    # ------------------------
+    # Mutable state (controlled)
+    # ------------------------
 
     def set_service(self, service: "GeoService") -> None:  # type: ignore
         """Inject the :class:`GeoService` used to fetch additional data."""
-        self._service = service
+        object.__setattr__(self, "_service", service)
+
+    def _set_geometry(self, geometry: Dict[str, Any]) -> None:
+        object.__setattr__(self, "_geometry", geometry)
 
     def get_geometry(self, force: bool = False) -> Optional[Dict[str, Any]]:
         """Return the geometry dictionary.
@@ -47,24 +76,27 @@ class GeoEntity(abc.ABC):
         """
         if self._service is None:
             return self._geometry
+
         if force or self._geometry is None:
-            self._geometry = self._service.fetch_entity_geometry(type(self), self)
+            geometry = self._service.fetch_entity_geometry(type(self), self)
+            self._set_geometry(geometry)
+
         return self._geometry
 
     def has_geometry(self) -> bool:
         """Return ``True`` if geometry is already cached."""
         return self._geometry is not None
 
-    def __hash__(self) -> int:
-        """Return hash of the entity based on its code."""
-        return hash(self.code)
+    # ------------------------
+    # Factory
+    # ------------------------
 
     @classmethod
     @abc.abstractmethod
     def from_api(cls: Type[Self], raw: Dict[str, Any]) -> Self:
         """Create an instance from a raw feature dictionary returned by the API."""
         raise NotImplementedError
-
+    
     @classmethod
     def _validate_and_create_entity(
         cls: Type[Self],
@@ -85,9 +117,13 @@ class GeoEntity(abc.ABC):
                 )
 
         # Map fields to constructor args
-        kwargs = {}
-        for prop_name, field_name in field_mapping.items():
-            kwargs[prop_name] = props.get(field_name)
+        kwargs = {
+            prop_name: props.get(field_name)
+            for prop_name, field_name in field_mapping.items()
+        }
+
+        if "code" in kwargs:
+            kwargs["_code"] = kwargs.pop("code")
 
         return cls(**kwargs)
 
@@ -95,12 +131,16 @@ class GeoEntity(abc.ABC):
 # Concrete entity definitions -------------------------------------------------
 
 
-@dataclass(eq=False)
+@dataclass(frozen=True, eq=False)
 class Region(GeoEntity):
     """Geographic region entity."""
 
-    code: str
+    _code: str
     name: Optional[str] = None
+
+    @property
+    def code(self) -> str:
+        return self._code
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "Region":
@@ -111,12 +151,16 @@ class Region(GeoEntity):
         )
 
 
-@dataclass(eq=False)
+@dataclass(frozen=True, eq=False)
 class Departement(GeoEntity):
     """Geographic department entity."""
 
-    code: str
+    _code: str
     name: Optional[str] = None
+
+    @property
+    def code(self) -> str:
+        return self._code
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "Departement":
@@ -127,12 +171,16 @@ class Departement(GeoEntity):
         )
 
 
-@dataclass(eq=False)
+@dataclass(frozen=True, eq=False)
 class Commune(GeoEntity):
     """Geographic commune entity."""
 
-    code: str
+    _code: str
     name: Optional[str] = None
+
+    @property
+    def code(self) -> str:
+        return self._code
 
     @classmethod
     def from_api(cls, raw: Dict[str, Any]) -> "Commune":
@@ -143,7 +191,7 @@ class Commune(GeoEntity):
         )
 
 
-@dataclass(eq=False)
+@dataclass(frozen=True, eq=False)
 class Arrondissement(GeoEntity):
     """Geographic arrondissement entity."""
 
@@ -168,7 +216,7 @@ class Arrondissement(GeoEntity):
         )
 
 
-@dataclass(eq=False)
+@dataclass(frozen=True, eq=False)
 class Section(GeoEntity):
     """Geographic section entity."""
 
@@ -188,7 +236,7 @@ class Section(GeoEntity):
         )
 
 
-@dataclass(eq=False)
+@dataclass(frozen=True, eq=False)
 class Feuille(GeoEntity):
     """Geographic feuille entity."""
 
@@ -213,7 +261,7 @@ class Feuille(GeoEntity):
         )
 
 
-@dataclass(eq=False)
+@dataclass(frozen=True, eq=False)
 class Parcelle(GeoEntity):
     """Geographic parcel entity."""
 
@@ -251,7 +299,7 @@ class Parcelle(GeoEntity):
         )
 
 
-@dataclass(eq=False)
+@dataclass(frozen=True, eq=False)
 class SubdivisionFiscale(GeoEntity):
     """Geographic subdivision fiscale entity."""
 
