@@ -43,12 +43,12 @@
       "search_by_name": {
         "PROPERTYNAME": "code_insee,nom_com",
         "CQL_FILTER": "nom_com ILIKE '{value}%'",
-          "COUNT": null
+          "COUNT": 999999
       },
         "search_by_code": {
           "PROPERTYNAME": "code_insee,nom_com",
           "CQL_FILTER": "code_insee ILIKE '{value}%'",
-          "COUNT": null
+          "COUNT": 999999
         },
       "geometry": {
         "PROPERTYNAME": "geom",

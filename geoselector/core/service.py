@@ -378,6 +378,9 @@ class GeoService:
             for ph in placeholders:
                 if hasattr(entity_obj, ph) and getattr(entity_obj, ph) is not None:
                     filters[ph] = getattr(entity_obj, ph)
+                elif ph == "value":
+                    # Fallback: use the entity's primary code identifier
+                    filters[ph] = entity_obj.code
                 else:
                     snake = re.sub(r"(?<!^)(?=[A-Z])", "_", ph).lower()
                     if (
